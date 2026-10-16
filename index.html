@@ -316,6 +316,21 @@ const CLOCK_ORDER = ['rick', 'bill', 'ted'];
 const ITINERARY = [
   { date: '2026-12-05', time: '7:00 PM', title: 'Everyone meets at the Shanghai airport',
     note: 'Meetup spot to be confirmed. Ted and Svetlana land at 5:50 PM, Rick and Alisha at 6:45 PM, Bill and Melissa at 6:55 PM.' },
+  { date: '2026-12-05', time: 'Night', title: 'Stay downtown Shanghai',
+    note: 'Hotel to be confirmed.' },
+  { date: '2026-12-06', time: 'Day', title: 'Tour around Shanghai', note: '' },
+  { date: '2026-12-06', time: 'Evening', title: 'Driver to Cixi City',
+    note: 'Overnight at the Platinum Hanjue Hotel in Cixi (to be confirmed).' },
+  { date: '2026-12-07', time: 'Day', title: 'Tour Ningbo Zhongda Leader Intelligent Transmission',
+    note: 'Main facility: No. 185 First Xinxing Road, New Industrial Zone, Cixi City, Zhejiang.' },
+  { date: '2026-12-07', time: 'Evening', title: 'Fly to Shenzhen',
+    note: 'Flight details to come. Hotel to be confirmed.' },
+  { date: '2026-12-08', time: 'Day', title: 'Tour Foshan Zhongda Lide Drive Technology',
+    note: 'Facility is in Dongguan. Address to come. Hotel to be confirmed.' },
+  { date: '2026-12-09', time: 'Day', title: 'Hosts show us around Shenzhen',
+    note: 'Hotel to be confirmed.' },
+  { date: '2026-12-10', time: 'Morning', title: 'Dropped at the Shenzhen high speed rail station',
+    note: 'Train to Hong Kong West Kowloon station, right next to the Ritz-Carlton. Train times to come.' },
   { date: '2026-12-10', time: '3:00 PM check-in', title: 'The Ritz-Carlton, Hong Kong',
     note: 'International Commerce Centre, 1 Austin Road West, Kowloon. Phone +852 2263 2263.' },
   { date: '2026-12-11', time: '12:00 PM', title: 'Bill & Melissa check out of the Ritz-Carlton',
@@ -326,13 +341,14 @@ const ITINERARY = [
     note: 'Their flight leaves at 10:30 PM, so ask the hotel about holding bags.' },
   { date: '2026-12-12', time: '10:30 PM', title: 'Rick & Alisha fly home from Hong Kong',
     note: 'HKG to San Francisco, landing 6:55 PM the same day.' },
-  { tbd: true, title: 'More details coming from the host', note: 'Hotels, meetings, and dinners will be added here.' }
+  { tbd: true, title: 'More details coming from the host', note: 'Hotels, train times, flights, and dinners will be added here.' }
 ];
 
 const CITIES = [
   { name: 'Shanghai', lat: 31.2304, lon: 121.4737, tz: 'Asia/Shanghai' },
   { name: 'Ningbo', lat: 29.8683, lon: 121.5440, tz: 'Asia/Shanghai' },
   { name: 'Shenzhen', lat: 22.5431, lon: 114.0579, tz: 'Asia/Shanghai' },
+  { name: 'Dongguan', lat: 23.0207, lon: 113.7518, tz: 'Asia/Shanghai' },
   { name: 'Hong Kong', lat: 22.3193, lon: 114.1694, tz: 'Asia/Hong_Kong' }
   // Add more once the itinerary is set, for example:
   // { name: 'Beijing', lat: 39.9042, lon: 116.4074, tz: 'Asia/Shanghai' },
@@ -343,7 +359,15 @@ const HOTELS = [
   { en: 'The Ritz-Carlton, Hong Kong', zh: '香港麗思卡爾頓酒店',
     addrZh: '九龍柯士甸道西1號 環球貿易廣場',
     addrEn: 'International Commerce Centre, 1 Austin Road West, Kowloon',
-    py: 'Xiānggǎng Lìsī Kǎ\'ěrdùn Jiǔdiàn' }
+    py: 'Xiānggǎng Lìsī Kǎ\'ěrdùn Jiǔdiàn' },
+  { en: 'Platinum Hanjue Hotel, Cixi', zh: '慈溪白金汉爵大酒店',
+    addrZh: '浙江省慈溪市杨梅大道北路888号',
+    addrEn: 'No. 888 Yangmei Avenue North Road, Cixi, Zhejiang',
+    py: 'Cíxī Báijīn Hànjué Dàjiǔdiàn' },
+  { en: 'Ningbo Zhongda Leader Intelligent Transmission', zh: '宁波中大力德智能传动股份有限公司',
+    addrZh: '浙江省慈溪市新兴一路185号',
+    addrEn: 'No. 185 First Xinxing Road, Cixi City, Zhejiang',
+    py: 'Níngbō Zhōngdà Lìdé Zhìnéng Chuándòng Gǔfèn Yǒuxiàn Gōngsī' }
 ];
 
 const AIRPORTS = [
