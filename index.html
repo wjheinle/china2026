@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="China 2026">
+<meta name="theme-color" content="#0E1424">
+<title>China 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=DM+Sans:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0E1424;
+    --ink-2: #172038;
+    --ink-3: #222d4b;
+    --haze: #8FA3B8;
+    --paper: #F3F1EC;
+    --lantern: #E0402F;
+    --jade: #5FB89A;
+    --line: rgba(243,241,236,.12);
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --han: 'Noto Serif SC', 'Songti SC', serif;
+    --tabh: 64px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--ink); color: var(--paper); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+  body { min-height: 100vh; padding-bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 16px); }
+  button { font: inherit; color: inherit; }
+  h1, h2, h3, p { margin: 0; }
+  .view { display: none; }
+  .view.on { display: block; }
+  .wrap { padding: 0 20px; max-width: 560px; margin: 0 auto; }
+
+  /* Hero */
+  .hero { position: relative; overflow: hidden; background: linear-gradient(180deg, #0a0f1d 0%, #16224a 70%, #2a3560 100%); padding: calc(env(safe-area-inset-top, 0px) + 36px) 0 0; }
+  .moon { position: absolute; right: -30px; top: calc(env(safe-area-inset-top, 0px) + 20px); width: 150px; height: 150px; border-radius: 50%; background: var(--lantern); opacity: .9; }
+  .hero .wrap { position: relative; }
+  .kicker { font-size: 15px; color: var(--haze); }
+  .bignum { display: flex; align-items: flex-end; gap: 10px; margin-top: 10px; }
+  .days { font-family: var(--display); font-weight: 800; font-size: clamp(110px, 34vw, 170px); line-height: .85; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  .han { font-family: var(--han); font-weight: 900; font-size: 52px; color: var(--lantern); line-height: 1; padding-bottom: 6px; text-shadow: 0 0 0 #000; }
+  .under { margin-top: 14px; font-size: 20px; font-family: var(--display); font-weight: 600; }
+  .when { margin-top: 4px; color: var(--haze); font-size: 15px; }
+  .hms { display: flex; gap: 22px; margin-top: 20px; font-variant-numeric: tabular-nums; }
+  .hms div { font-family: var(--display); font-size: 28px; font-weight: 600; line-height: 1; }
+  .hms span { display: block; font-family: var(--body); font-size: 12px; font-weight: 400; color: var(--haze); margin-top: 4px; }
+  .hero.nocount .bignum, .hero.nocount .under, .hero.nocount .hms { display: none; }
+  .hero.nocount .when { font-family: var(--display); font-weight: 600; font-size: 24px; color: var(--paper); margin-top: 8px; max-width: 12em; }
+  .skyline { display: block; width: 100%; height: 130px; margin-top: 16px; }
+
+  /* Sections */
+  section.blk { padding: 28px 0 4px; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 26px; letter-spacing: -.01em; }
+  .sub { color: var(--haze); font-size: 14px; margin-top: 2px; }
+
+  .clocks { margin-top: 14px; border-top: 1px solid var(--line); }
+  .clock { display: grid; grid-template-columns: 1fr auto; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .clock .place { font-weight: 500; }
+  .clock .who { display: block; font-size: 13px; color: var(--haze); font-weight: 400; }
+  .clock .t { font-family: var(--display); font-size: 24px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .clock .d { display: block; font-family: var(--body); font-size: 12px; color: var(--haze); font-weight: 400; }
+  .clock.cn .place, .clock.cn .t { color: var(--lantern); }
+  .diff { font-size: 13px; color: var(--haze); margin-top: 10px; }
+
+  .stop { position: relative; padding: 0 0 22px 22px; border-left: 2px solid var(--ink-3); margin-left: 6px; }
+  .stop::before { content: ""; position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--ink); border: 2px solid var(--haze); }
+  .stop.first::before { background: var(--lantern); border-color: var(--lantern); }
+  .stop .date { font-size: 13px; color: var(--haze); }
+  .stop h3 { font-family: var(--display); font-weight: 600; font-size: 19px; margin-top: 1px; }
+  .stop p { color: #cfd6e0; font-size: 15px; margin-top: 3px; }
+  .stop.tbd h3 { color: var(--haze); font-weight: 400; font-style: italic; }
+  .tline { margin-top: 18px; }
+
+  .crew { margin-top: 14px; display: grid; gap: 10px; }
+  .couple { background: var(--ink-2); border-radius: 14px; padding: 14px 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+  .couple .fl { flex-basis: 100%; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 14px; color: #cfd6e0; }
+  .couple .fl div + div { margin-top: 4px; }
+  .couple b { font-family: var(--display); font-weight: 600; font-size: 18px; }
+  .couple span { color: var(--haze); font-size: 14px; }
+
+  /* Weather */
+  .chips { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .chip { background: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .chip.on { background: var(--paper); color: var(--ink); border-color: var(--paper); font-weight: 700; }
+  .wnow { margin-top: 18px; background: linear-gradient(160deg, var(--ink-3), var(--ink-2)); border-radius: 18px; padding: 20px; }
+  .wnow .temp { font-family: var(--display); font-weight: 800; font-size: 76px; line-height: 1; letter-spacing: -.03em; }
+  .wnow .temp small { font-size: 26px; font-weight: 600; color: var(--haze); letter-spacing: 0; }
+  .wnow .cond { font-size: 18px; font-family: var(--display); font-weight: 600; margin-top: 4px; }
+  .wnow .meta { color: var(--haze); font-size: 14px; margin-top: 6px; }
+  .fc { margin-top: 18px; border-top: 1px solid var(--line); }
+  .fcrow { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: center; font-size: 15px; }
+  .fcrow .c { color: #cfd6e0; }
+  .fcrow .hl { font-variant-numeric: tabular-nums; text-align: right; }
+  .fcrow .hl i { font-style: normal; color: var(--haze); }
+  .note { margin-top: 16px; font-size: 14px; color: var(--haze); }
+
+  /* Ideas */
+  .who-bar { margin-top: 14px; }
+  .who-bar p { font-size: 14px; color: var(--haze); margin-bottom: 8px; }
+  .addrow { display: flex; gap: 8px; margin-top: 16px; }
+  .addrow input { flex: 1; min-width: 0; background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; color: var(--paper); font: inherit; font-size: 16px; }
+  .addrow input::placeholder { color: #6f7f93; }
+  .btn { background: var(--lantern); border: 0; border-radius: 12px; padding: 0 18px; font-weight: 700; cursor: pointer; color: #fff; }
+  .btn:disabled { opacity: .5; }
+  .idea { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .idea .tx { font-size: 16px; }
+  .idea .by { font-size: 13px; color: var(--haze); margin-top: 2px; }
+  .vote { background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 56px; text-align: center; cursor: pointer; font-weight: 700; }
+  .vote.mine { background: var(--jade); color: var(--ink); border-color: var(--jade); }
+  .rm { background: none; border: 0; color: var(--haze); font-size: 13px; padding: 2px 0; cursor: pointer; text-decoration: underline; }
+  .empty { padding: 26px 0; color: var(--haze); }
+  .err { color: #ff9b8f; font-size: 14px; margin-top: 10px; }
+
+  /* Guide */
+  .gsub { margin-top: 26px; }
+  .drv { margin-top: 12px; display: grid; gap: 10px; }
+  .dcard { background: var(--ink-2); border-radius: 14px; padding: 14px 16px; cursor: pointer; border: 1px solid var(--line); text-align: left; width: 100%; }
+  .dcard .zh { font-family: var(--han); font-weight: 600; font-size: 24px; }
+  .dcard .en { font-size: 14px; color: var(--haze); margin-top: 2px; }
+  .dcard .tap { font-size: 12px; color: var(--jade); margin-top: 6px; }
+  .phr { margin-top: 12px; border-top: 1px solid var(--line); }
+  .ph { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .ph .py { font-size: 13px; color: var(--haze); }
+  .ph .zh { font-family: var(--han); font-weight: 600; font-size: 20px; text-align: right; }
+  .chk { margin-top: 12px; }
+  .chk label { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .chk input { width: 22px; height: 22px; margin-top: 1px; accent-color: var(--jade); flex: none; }
+  .chk b { font-weight: 500; display: block; }
+  .chk span { font-size: 14px; color: var(--haze); }
+  .chk input:checked + div b { text-decoration: line-through; color: var(--haze); }
+
+  /* Full-screen driver card */
+  .show { position: fixed; inset: 0; background: var(--paper); color: var(--ink); z-index: 50; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 30px; }
+  .show.on { display: flex; }
+  .show .zh { font-family: var(--han); font-weight: 900; font-size: clamp(40px, 12vw, 64px); line-height: 1.25; }
+  .show .en { margin-top: 20px; font-size: 18px; color: #4a5568; }
+  .show .py { margin-top: 6px; font-size: 15px; color: #6b7686; }
+  .show .x { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 28px); font-size: 14px; color: #6b7686; }
+
+  /* Tabs */
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: rgba(14,20,36,.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  nav .in { display: grid; grid-template-columns: repeat(5, 1fr); max-width: 560px; margin: 0 auto; }
+  nav button { height: var(--tabh); background: none; border: 0; color: var(--haze); font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
+  nav button .g { font-family: var(--han); font-weight: 900; font-size: 22px; line-height: 1; }
+  nav button.on { color: var(--paper); }
+  nav button.on .g { color: var(--lantern); }
+  :focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) { .moon { animation: drift 40s ease-in-out infinite alternate; } }
+  @keyframes drift { from { transform: translateY(0); } to { transform: translateY(14px); } }
+</style>
+</head>
+<body>
+
+<!-- TRIP -->
+<main id="v-trip" class="view on">
+  <header class="hero" id="hero">
+    <div class="moon"></div>
+    <div class="wrap">
+      <p class="kicker">China 2026</p>
+      <div class="bignum"><div class="days" id="days">--</div><div class="han">天</div></div>
+      <p class="under" id="under">until we meet in Shanghai</p>
+      <p class="when" id="when"></p>
+      <div class="hms" id="hms"></div>
+    </div>
+    <svg class="skyline" viewBox="0 0 400 130" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <g fill="#0a0f1d">
+        <rect x="0" y="86" width="26" height="44"/><rect x="22" y="70" width="20" height="60"/>
+        <rect x="46" y="94" width="30" height="36"/><rect x="72" y="58" width="16" height="72"/>
+        <rect x="92" y="80" width="24" height="50"/><rect x="118" y="48" width="14" height="82"/>
+        <rect x="134" y="76" width="26" height="54"/>
+        <rect x="190" y="30" width="5" height="100"/>
+        <circle cx="192.5" cy="40" r="9"/><circle cx="192.5" cy="72" r="14"/>
+        <rect x="190" y="14" width="1.5" height="20"/>
+        <rect x="224" y="62" width="22" height="68"/><rect x="248" y="22" width="18" height="108"/>
+        <rect x="268" y="44" width="22" height="86"/><rect x="292" y="84" width="26" height="46"/>
+        <rect x="320" y="56" width="16" height="74"/><rect x="338" y="90" width="28" height="40"/>
+        <rect x="366" y="68" width="34" height="62"/>
+      </g>
+      <g fill="#E0402F" opacity=".75"><circle cx="192.5" cy="40" r="3"/><circle cx="192.5" cy="72" r="5"/></g>
+    </svg>
+  </header>
+
+  <div class="wrap">
+    <section class="blk">
+      <h2>What time is it there</h2>
+      <div class="clocks" id="clocks"></div>
+      <p class="diff" id="diff"></p>
+    </section>
+
+    <section class="blk">
+      <h2>The crew</h2>
+      <div class="crew" id="crew"></div>
+    </section>
+  </div>
+</main>
+
+<!-- ITINERARY -->
+<main id="v-itin" class="view">
+  <div class="wrap" style="padding-top: calc(env(safe-area-inset-top, 0px) + 28px)">
+    <h2>Itinerary</h2>
+    <p class="sub">Updated as the host sends details</p>
+    <div class="tline" id="itin"></div>
+  </div>
+</main>
+
+<!-- WEATHER -->
+<main id="v-weather" class="view">
+  <div class="wrap" style="padding-top: calc(env(safe-area-inset-top, 0px) + 28px)">
+    <h2>Weather</h2>
+    <p class="sub" id="wsub">Live conditions</p>
+    <div class="chips" id="cities"></div>
+    <div id="wbody"><p class="empty">Loading weather</p></div>
+  </div>
+</main>
+
+<!-- IDEAS -->
+<main id="v-ideas" class="view">
+  <div class="wrap" style="padding-top: calc(env(safe-area-inset-top, 0px) + 28px)">
+    <h2>Ideas</h2>
+    <p class="sub">Things to see, eat, or try. Tap the count to vote.</p>
+    <div class="who-bar">
+      <p>Posting as</p>
+      <div class="chips" id="who"></div>
+    </div>
+    <form class="addrow" id="addform">
+      <input id="newidea" type="text" maxlength="200" placeholder="Add an idea" autocomplete="off" enterkeyhint="send">
+      <button class="btn" id="addbtn" type="submit">Add</button>
+    </form>
+    <p class="err" id="ierr" hidden></p>
+    <div id="ideas"><p class="empty">Loading ideas</p></div>
+  </div>
+</main>
+
+<!-- GUIDE -->
+<main id="v-guide" class="view">
+  <div class="wrap" style="padding-top: calc(env(safe-area-inset-top, 0px) + 28px)">
+    <h2>Guide</h2>
+
+    <div class="gsub">
+      <h2 style="font-size:21px">Show your driver</h2>
+      <p class="sub">Tap a card to fill the screen with Chinese text.</p>
+      <div class="drv" id="drv"></div>
+    </div>
+
+    <div class="gsub">
+      <h2 style="font-size:21px">Before we go</h2>
+      <div class="chk" id="chk"></div>
+    </div>
+
+    <div class="gsub">
+      <h2 style="font-size:21px">Useful phrases</h2>
+      <div class="phr" id="phr"></div>
+    </div>
+  </div>
+</main>
+
+<div class="show" id="show" role="dialog" aria-modal="true">
+  <div class="zh" id="show-zh"></div>
+  <div class="en" id="show-en"></div>
+  <div class="py" id="show-py"></div>
+  <div class="x">Tap anywhere to close</div>
+</div>
+
+<nav aria-label="Sections">
+  <div class="in">
+    <button data-v="trip" class="on"><span class="g">行</span>Trip</button>
+    <button data-v="itin"><span class="g">程</span>Itinerary</button>
+    <button data-v="weather"><span class="g">天</span>Weather</button>
+    <button data-v="ideas"><span class="g">想</span>Ideas</button>
+    <button data-v="guide"><span class="g">指</span>Guide</button>
+  </div>
+</nav>
+
+<script>
+/* ============ EDIT THESE ============ */
+const TRIP = {
+  // Meetup at the Shanghai airport. Shanghai is UTC+8 all year.
+  target: '2026-12-05T19:00:00+08:00',
+  meetLabel: '7:00 PM Shanghai time'
+};
+
+const CREW = [
+  { id: 'bill', names: 'Bill & Melissa', from: 'Colorado',   tz: 'America/Denver',
+    flights: [
+      'Fri Dec 4: Denver 7:55 AM to LAX 9:34 AM · UA 1638',
+      'Fri Dec 4: LAX 12:45 PM to Shanghai (PVG), lands Sat Dec 5, 6:55 PM · UA 198',
+      'Fri Dec 11: Hong Kong (HKG) 10:30 PM to SFO, lands 6:55 PM · UA 878',
+      'Fri Dec 11: SFO 8:54 PM to Denver, lands Sat Dec 12, 12:30 AM · UA 301'
+    ] },
+  { id: 'rick', names: 'Rick & Alisha',  from: 'California', tz: 'America/Los_Angeles',
+    flights: [
+      'Fri Dec 4: SFO 12:55 PM to Shanghai (PVG), lands Sat Dec 5, 6:45 PM · UA 857',
+      'Sat Dec 12: Hong Kong (HKG) 10:30 PM to SFO, lands 6:55 PM'
+    ] },
+  { id: 'ted',  names: 'Ted & Svetlana', from: 'Minnesota',  tz: 'America/Chicago',
+    flights: [
+      'Sat Dec 5: lands in Shanghai at 5:50 PM (flight details to come)'
+    ] }
+];
+
+// Hours before the meetup when the countdown disappears.
+const HIDE_COUNTDOWN_HOURS = 5;
+
+// Order of the home-time clocks, west to east.
+const CLOCK_ORDER = ['rick', 'bill', 'ted'];
+
+// date is YYYY-MM-DD (Shanghai date). The weekday is worked out for you.
+const ITINERARY = [
+  { date: '2026-12-05', time: '7:00 PM', title: 'Everyone meets at the Shanghai airport',
+    note: 'Meetup spot to be confirmed. Ted and Svetlana land at 5:50 PM, Rick and Alisha at 6:45 PM, Bill and Melissa at 6:55 PM.' },
+  { date: '2026-12-10', time: '3:00 PM check-in', title: 'The Ritz-Carlton, Hong Kong',
+    note: 'International Commerce Centre, 1 Austin Road West, Kowloon. Phone +852 2263 2263.' },
+  { date: '2026-12-11', time: '12:00 PM', title: 'Bill & Melissa check out of the Ritz-Carlton',
+    note: 'Their flight leaves at 10:30 PM, so ask the hotel about holding bags.' },
+  { date: '2026-12-11', time: '10:30 PM', title: 'Bill & Melissa fly home from Hong Kong',
+    note: 'HKG to San Francisco on UA 878, then on to Denver.' },
+  { date: '2026-12-12', time: '12:00 PM', title: 'Rick & Alisha check out of the Ritz-Carlton',
+    note: 'Their flight leaves at 10:30 PM, so ask the hotel about holding bags.' },
+  { date: '2026-12-12', time: '10:30 PM', title: 'Rick & Alisha fly home from Hong Kong',
+    note: 'HKG to San Francisco, landing 6:55 PM the same day.' },
+  { tbd: true, title: 'More details coming from the host', note: 'Hotels, meetings, and dinners will be added here.' }
+];
+
+const CITIES = [
+  { name: 'Shanghai', lat: 31.2304, lon: 121.4737, tz: 'Asia/Shanghai' },
+  { name: 'Ningbo', lat: 29.8683, lon: 121.5440, tz: 'Asia/Shanghai' },
+  { name: 'Shenzhen', lat: 22.5431, lon: 114.0579, tz: 'Asia/Shanghai' },
+  { name: 'Hong Kong', lat: 22.3193, lon: 114.1694, tz: 'Asia/Hong_Kong' }
+  // Add more once the itinerary is set, for example:
+  // { name: 'Beijing', lat: 39.9042, lon: 116.4074, tz: 'Asia/Shanghai' },
+];
+
+// Hotels show up as tap-to-show cards in the Guide tab. Fill in when known.
+const HOTELS = [
+  { en: 'The Ritz-Carlton, Hong Kong', zh: '香港麗思卡爾頓酒店',
+    addrZh: '九龍柯士甸道西1號 環球貿易廣場',
+    addrEn: 'International Commerce Centre, 1 Austin Road West, Kowloon',
+    py: 'Xiānggǎng Lìsī Kǎ\'ěrdùn Jiǔdiàn' }
+];
+
+const AIRPORTS = [
+  { zh: '上海浦东国际机场', en: 'Shanghai Pudong International Airport (PVG)', py: 'Shànghǎi Pǔdōng Guójì Jīchǎng' },
+  { zh: '上海虹桥国际机场', en: 'Shanghai Hongqiao International Airport (SHA)', py: 'Shànghǎi Hóngqiáo Guójì Jīchǎng' },
+  { zh: '宁波栎社国际机场', en: 'Ningbo Lishe International Airport (NGB)', py: 'Níngbō Lìshè Guójì Jīchǎng' },
+  { zh: '深圳宝安国际机场', en: 'Shenzhen Bao\'an International Airport (SZX)', py: 'Shēnzhèn Bǎo\'ān Guójì Jīchǎng' },
+  { zh: '香港國際機場', en: 'Hong Kong International Airport (HKG)', py: 'Xiānggǎng Guójì Jīchǎng' }
+];
+
+const PHRASES = [
+  ['Hello', 'Nǐ hǎo', '你好'],
+  ['Thank you', 'Xièxie', '谢谢'],
+  ['Excuse me / May I ask', 'Qǐngwèn', '请问'],
+  ['Cheers', 'Gānbēi', '干杯'],
+  ['Delicious', 'Hǎochī', '好吃'],
+  ['No spicy, please', 'Bú yào là', '不要辣'],
+  ['Where is the restroom?', 'Xǐshǒujiān zài nǎlǐ?', '洗手间在哪里？'],
+  ['How much is it?', 'Duōshao qián?', '多少钱？'],
+  ['The check, please', 'Mǎidān', '买单'],
+  ['Water', 'Shuǐ', '水'],
+  ['Sorry', 'Duìbuqǐ', '对不起'],
+  ['I don\'t understand', 'Wǒ tīng bù dǒng', '我听不懂']
+];
+
+const CHECKLIST = [
+  ['Confirm entry requirements with the host', 'Passport validity and any visa or entry paperwork. Ask the host company what they need from you.'],
+  ['Set up a VPN before you leave', 'Many Western apps and sites are blocked in mainland China. Install and test it at home.'],
+  ['Get an eSIM or roaming plan', 'Set it up ahead of time so you have data when you land.'],
+  ['Set up Alipay or WeChat Pay', 'Link a foreign card before the trip. Many places prefer mobile pay over cash.'],
+  ['Download offline maps and a translator', 'Save the languages and areas you need for offline use.'],
+  ['Screenshot flights, hotels, and host contacts', 'Keep copies that work with no signal.']
+];
+/* ============ END EDIT ============ */
+
+const $ = (s) => document.querySelector(s);
+const target = new Date(TRIP.target);
+const SH = 'Asia/Shanghai';
+
+/* ---------- Tabs ---------- */
+function show(v) {
+  document.querySelectorAll('.view').forEach((el) => el.classList.toggle('on', el.id === 'v-' + v));
+  document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+  window.scrollTo(0, 0);
+  if (v === 'weather') loadWeather();
+  if (v === 'ideas') loadIdeas();
+}
+document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
+
+/* ---------- Time helpers ---------- */
+function offsetMin(tz, date) {
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }).formatToParts(date);
+  const g = (t) => +p.find((x) => x.type === t).value;
+  return (Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute'), g('second')) - Math.floor(date.getTime() / 1000) * 1000) / 60000;
+}
+const fmtTime = (d, tz) => new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit' }).format(d);
+const fmtDay = (d, tz) => new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }).format(d);
+
+/* ---------- Countdown ---------- */
+function tickCountdown() {
+  const now = new Date();
+  let ms = target - now;
+  // Within 5 hours of the meetup (and after), drop the countdown and show only the time zone info.
+  const quiet = ms <= HIDE_COUNTDOWN_HOURS * 3600000;
+  $('#hero').classList.toggle('nocount', quiet);
+  if (quiet) return;
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  $('#days').textContent = d;
+  $('#under').textContent = d === 1 ? 'day until we meet in Shanghai' : 'days until we meet in Shanghai';
+  $('#hms').innerHTML = [[h, 'hours'], [m, 'minutes'], [sec, 'seconds']].map(([n, l]) => '<div>' + String(n).padStart(2, '0') + '<span>' + l + '</span></div>').join('');
+}
+$('#when').textContent = new Intl.DateTimeFormat('en-US', { timeZone: SH, weekday: 'long', month: 'long', day: 'numeric' }).format(target) + ', ' + TRIP.meetLabel;
+
+/* ---------- Clocks ---------- */
+function renderClocks() {
+  const now = new Date();
+  const rows = [{ place: 'Shanghai', who: 'China time', tz: SH, cn: true }].concat(
+    CLOCK_ORDER.map((id) => CREW.find((c) => c.id === id)).map((c) => ({ place: c.from, who: c.names, tz: c.tz })));
+  $('#clocks').innerHTML = rows.map((r) => '<div class="clock' + (r.cn ? ' cn' : '') + '"><div class="place">' + r.place + '<span class="who">' + r.who + '</span></div><div class="t">' + fmtTime(now, r.tz) + '<span class="d">' + fmtDay(now, r.tz) + '</span></div></div>').join('');
+}
+function renderDiff() {
+  const shOff = offsetMin(SH, target);
+  const parts = CLOCK_ORDER.map((id) => CREW.find((c) => c.id === id)).map((c) => {
+    const h = (shOff - offsetMin(c.tz, target)) / 60;
+    return c.from + ' ' + h + ' hours';
+  });
+  $('#diff').textContent = 'On Dec 5, Shanghai is ahead of ' + parts.join(', ') + '.';
+}
+
+/* ---------- Itinerary and crew ---------- */
+function renderItin() {
+  $('#itin').innerHTML = ITINERARY.map((s, i) => {
+    if (s.tbd) return '<div class="stop tbd"><h3>' + s.title + '</h3><p>' + (s.note || '') + '</p></div>';
+    const d = new Date(s.date + 'T12:00:00+08:00');
+    const label = new Intl.DateTimeFormat('en-US', { timeZone: SH, weekday: 'long', month: 'long', day: 'numeric' }).format(d) + (s.time ? ', ' + s.time : '');
+    return '<div class="stop' + (i === 0 ? ' first' : '') + '"><div class="date">' + label + '</div><h3>' + s.title + '</h3>' + (s.note ? '<p>' + s.note + '</p>' : '') + '</div>';
+  }).join('');
+}
+function renderCrew() {
+  $('#crew').innerHTML = CREW.map((c) => '<div class="couple"><b>' + c.names + '</b><span>' + c.from + '</span>' +
+    (c.flights ? '<div class="fl">' + c.flights.map((f) => '<div>' + f + '</div>').join('') + '</div>' : '') + '</div>').join('');
+}
+
+/* ---------- Weather ---------- */
+const WX = { 0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Freezing fog', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle', 56: 'Freezing drizzle', 57: 'Freezing drizzle', 61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 66: 'Freezing rain', 67: 'Freezing rain', 71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 77: 'Snow grains', 80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy showers', 85: 'Snow showers', 86: 'Snow showers', 95: 'Thunderstorm', 96: 'Thunderstorm with hail', 99: 'Thunderstorm with hail' };
+let cityIdx = 0, wxLoaded = {};
+function renderCities() {
+  $('#cities').innerHTML = CITIES.length > 1 ? CITIES.map((c, i) => '<button class="chip' + (i === cityIdx ? ' on' : '') + '" data-i="' + i + '">' + c.name + '</button>').join('') : '';
+  document.querySelectorAll('#cities .chip').forEach((b) => b.addEventListener('click', () => { cityIdx = +b.dataset.i; renderCities(); loadWeather(true); }));
+}
+const toC = (f) => Math.round((f - 32) * 5 / 9);
+async function loadWeather(force) {
+  const c = CITIES[cityIdx];
+  const body = $('#wbody');
+  const cached = wxLoaded[c.name];
+  if (cached && !force && Date.now() - cached.t < 10 * 60 * 1000) return paintWeather(c, cached.j);
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + c.lat + '&longitude=' + c.lon +
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+      '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=' + encodeURIComponent(c.tz) + '&forecast_days=7';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('bad status');
+    const j = await r.json();
+    wxLoaded[c.name] = { t: Date.now(), j };
+    paintWeather(c, j);
+  } catch (e) {
+    body.innerHTML = '<p class="empty">Could not load the weather. Check your connection and switch tabs to try again.</p>';
+  }
+}
+function paintWeather(c, j) {
+  const cu = j.current, d = j.daily;
+  const t = Math.round(cu.temperature_2m);
+  let h = '<div class="wnow"><div class="temp">' + t + '°<small>F · ' + toC(cu.temperature_2m) + '°C</small></div>' +
+    '<div class="cond">' + (WX[cu.weather_code] || 'Conditions unavailable') + '</div>' +
+    '<div class="meta">Feels like ' + Math.round(cu.apparent_temperature) + '°F · Humidity ' + Math.round(cu.relative_humidity_2m) + '% · Wind ' + Math.round(cu.wind_speed_10m) + ' mph</div></div>';
+  h += '<div class="fc">' + d.time.map((day, i) => {
+    const lbl = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short', month: 'numeric', day: 'numeric' }).format(new Date(day + 'T12:00:00Z'));
+    return '<div class="fcrow"><div>' + lbl + '</div><div class="c">' + (WX[d.weather_code[i]] || '') + (d.precipitation_probability_max[i] != null ? ' · ' + d.precipitation_probability_max[i] + '% rain' : '') + '</div><div class="hl">' + Math.round(d.temperature_2m_max[i]) + '° <i>/ ' + Math.round(d.temperature_2m_min[i]) + '°</i></div></div>';
+  }).join('') + '</div>';
+  h += '<p class="note">This is the current forecast for ' + c.name + '. A forecast for Dec 5 shows up here once it is about two weeks away. December there is usually cold and damp, so plan for layers.</p>';
+  $('#wbody').innerHTML = h;
+  $('#wsub').textContent = c.name + ' right now';
+}
+
+/* ---------- Ideas (shared) ---------- */
+let me = null;
+try { me = localStorage.getItem('china-who'); } catch (e) {}
+if (!CREW.some((c) => c.id === me)) me = null;
+let ideas = [], ideasTimer = null;
+const coupleName = (id) => (CREW.find((c) => c.id === id) || { names: id }).names;
+
+function renderWho() {
+  $('#who').innerHTML = CREW.map((c) => '<button class="chip' + (c.id === me ? ' on' : '') + '" data-id="' + c.id + '">' + c.names + '</button>').join('');
+  document.querySelectorAll('#who .chip').forEach((b) => b.addEventListener('click', () => {
+    me = b.dataset.id;
+    try { localStorage.setItem('china-who', me); } catch (e) {}
+    renderWho(); renderIdeas();
+  }));
+}
+function showErr(msg) { const e = $('#ierr'); e.textContent = msg || ''; e.hidden = !msg; }
+function renderIdeas() {
+  if (!ideas.length) { $('#ideas').innerHTML = '<p class="empty">No ideas yet. Add the first one above.</p>'; return; }
+  const sorted = ideas.slice().sort((a, b) => b.votes.length - a.votes.length || b.created - a.created);
+  $('#ideas').innerHTML = sorted.map((i) => {
+    const mine = me && i.votes.includes(me);
+    return '<div class="idea"><div><div class="tx">' + esc(i.text) + '</div><div class="by">' + coupleName(i.by) + (me === i.by ? ' · <button class="rm" data-rm="' + i.id + '">remove</button>' : '') + '</div></div><button class="vote' + (mine ? ' mine' : '') + '" data-v="' + i.id + '" aria-label="Vote">+' + i.votes.length + '</button></div>';
+  }).join('');
+  document.querySelectorAll('[data-v]').forEach((b) => { if (b.classList.contains('vote')) b.addEventListener('click', () => vote(b.dataset.v)); });
+  document.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => removeIdea(b.dataset.rm)));
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+  return j;
+}
+async function loadIdeas() {
+  try { ideas = await api('/api/ideas'); showErr(''); renderIdeas(); }
+  catch (e) { showErr('Could not reach the server. Try again in a moment.'); }
+  clearTimeout(ideasTimer);
+  ideasTimer = setTimeout(() => { if (!document.hidden && $('#v-ideas').classList.contains('on')) loadIdeas(); }, 30000);
+}
+async function vote(id) {
+  if (!me) return showErr('Pick who you are first.');
+  try {
+    const u = await api('/api/ideas/' + id + '/vote', { method: 'POST', body: JSON.stringify({ by: me }) });
+    ideas = ideas.map((i) => (i.id === id ? u : i)); showErr(''); renderIdeas();
+  } catch (e) { showErr(e.message); }
+}
+async function removeIdea(id) {
+  if (!confirm('Remove this idea?')) return;
+  try { await api('/api/ideas/' + id, { method: 'DELETE', body: JSON.stringify({ by: me }) }); ideas = ideas.filter((i) => i.id !== id); renderIdeas(); }
+  catch (e) { showErr(e.message); }
+}
+$('#addform').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const inp = $('#newidea'), text = inp.value.trim();
+  if (!text) return;
+  if (!me) return showErr('Pick who you are first.');
+  $('#addbtn').disabled = true;
+  try { const n = await api('/api/ideas', { method: 'POST', body: JSON.stringify({ text, by: me }) }); ideas.unshift(n); inp.value = ''; showErr(''); renderIdeas(); }
+  catch (err) { showErr(err.message); }
+  $('#addbtn').disabled = false;
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden && $('#v-ideas').classList.contains('on')) loadIdeas(); });
+
+/* ---------- Guide ---------- */
+function openShow(zh, en, py) {
+  $('#show-zh').innerHTML = zh; $('#show-en').textContent = en; $('#show-py').textContent = py || '';
+  $('#show').classList.add('on');
+}
+$('#show').addEventListener('click', () => $('#show').classList.remove('on'));
+function renderGuide() {
+  const cards = [];
+  HOTELS.forEach((h) => cards.push({ zh: h.zh, sub: h.addrZh, en: h.en + (h.addrEn ? ' · ' + h.addrEn : ''), py: h.py }));
+  AIRPORTS.forEach((a) => cards.push({ zh: a.zh, en: a.en, py: a.py }));
+  $('#drv').innerHTML = (HOTELS.length ? '' : '<p class="sub">Hotel cards will appear here once the host confirms them.</p>') +
+    cards.map((c, i) => '<button class="dcard" data-c="' + i + '"><div class="zh">' + c.zh + '</div><div class="en">' + c.en + '</div><div class="tap">Tap to show</div></button>').join('');
+  document.querySelectorAll('.dcard').forEach((b) => b.addEventListener('click', () => {
+    const c = cards[+b.dataset.c];
+    openShow(c.zh + (c.sub ? '<br><span style="font-size:.55em;font-weight:600">' + c.sub + '</span>' : ''), c.en, c.py);
+  }));
+  $('#phr').innerHTML = PHRASES.map((p) => '<div class="ph"><div><div>' + p[0] + '</div><div class="py">' + p[1] + '</div></div><div class="zh">' + p[2] + '</div></div>').join('');
+
+  let done = {};
+  try { done = JSON.parse(localStorage.getItem('china-chk') || '{}'); } catch (e) {}
+  $('#chk').innerHTML = CHECKLIST.map((c, i) => '<label><input type="checkbox" data-k="' + i + '"' + (done[i] ? ' checked' : '') + '><div><b>' + c[0] + '</b><span>' + c[1] + '</span></div></label>').join('');
+  document.querySelectorAll('#chk input').forEach((cb) => cb.addEventListener('change', () => {
+    done[cb.dataset.k] = cb.checked;
+    try { localStorage.setItem('china-chk', JSON.stringify(done)); } catch (e) {}
+  }));
+}
+
+/* ---------- Boot ---------- */
+renderItin(); renderCrew(); renderDiff(); renderClocks(); renderCities(); renderWho(); renderGuide();
+tickCountdown();
+setInterval(tickCountdown, 1000);
+setInterval(renderClocks, 15000);
+</script>
+</body>
+</html>
