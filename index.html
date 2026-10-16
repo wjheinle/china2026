@@ -11,6 +11,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="/icons/favicon-48.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <title>China 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -102,20 +103,24 @@
   .fcrow .hl i { font-style: normal; color: var(--haze); }
   .note { margin-top: 16px; font-size: 14px; color: var(--haze); }
 
-  /* Ideas */
-  .who-bar { margin-top: 14px; }
-  .who-bar p { font-size: 14px; color: var(--haze); margin-bottom: 8px; }
-  .addrow { display: flex; gap: 8px; margin-top: 16px; }
-  .addrow input { flex: 1; min-width: 0; background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; color: var(--paper); font: inherit; font-size: 16px; }
-  .addrow input::placeholder { color: #6f7f93; }
-  .btn { background: var(--lantern); border: 0; border-radius: 12px; padding: 0 18px; font-weight: 700; cursor: pointer; color: #fff; }
-  .btn:disabled { opacity: .5; }
-  .idea { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
-  .idea .tx { font-size: 16px; }
-  .idea .by { font-size: 13px; color: var(--haze); margin-top: 2px; }
-  .vote { background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 56px; text-align: center; cursor: pointer; font-weight: 700; }
-  .vote.mine { background: var(--jade); color: var(--ink); border-color: var(--jade); }
-  .rm { background: none; border: 0; color: var(--haze); font-size: 13px; padding: 2px 0; cursor: pointer; text-decoration: underline; }
+  /* Map */
+  #map { position: relative; z-index: 0; isolation: isolate; height: 52vh; min-height: 320px; margin-top: 14px; border-radius: 16px; overflow: hidden; background: var(--ink-2); }
+  .pin { width: 18px; height: 18px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,.5); }
+  .pin.tbd { background: transparent !important; border: 3px dashed #fff; width: 22px; height: 22px; }
+  .leaflet-popup-content-wrapper { background: var(--paper); color: var(--ink); border-radius: 12px; }
+  .leaflet-popup-tip { background: var(--paper); }
+  .leaflet-popup-content { font-family: var(--body); font-size: 14px; line-height: 1.4; margin: 12px 14px; }
+  .pop b { font-family: var(--display); font-size: 16px; font-weight: 600; display: block; }
+  .pop .zh { font-family: var(--han); font-weight: 600; font-size: 15px; margin-top: 2px; }
+  .pop .ad { color: #4a5568; margin-top: 4px; }
+  .pop .ap { color: #b3341f; margin-top: 4px; font-size: 13px; }
+  .pop .acts { display: flex; gap: 8px; margin-top: 10px; }
+  .pop .acts a, .pop .acts button { font: inherit; font-size: 13px; font-weight: 700; padding: 8px 10px; border-radius: 10px; border: 0; background: var(--ink); color: var(--paper); text-decoration: none; cursor: pointer; }
+  .legend { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .plist { margin-top: 14px; border-top: 1px solid var(--line); }
+  .prow { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 12px 0; cursor: pointer; }
+  .prow b { font-weight: 500; display: block; }
+  .prow span { font-size: 13px; color: var(--haze); }
   .empty { padding: 26px 0; color: var(--haze); }
   .err { color: #ff9b8f; font-size: 14px; margin-top: 10px; }
 
@@ -221,21 +226,15 @@
   </div>
 </main>
 
-<!-- IDEAS -->
-<main id="v-ideas" class="view">
+<!-- MAP -->
+<main id="v-map" class="view">
   <div class="wrap" style="padding-top: calc(env(safe-area-inset-top, 0px) + 28px)">
-    <h2>Ideas</h2>
-    <p class="sub">Things to see, eat, or try. Tap the count to vote.</p>
-    <div class="who-bar">
-      <p>Posting as</p>
-      <div class="chips" id="who"></div>
-    </div>
-    <form class="addrow" id="addform">
-      <input id="newidea" type="text" maxlength="200" placeholder="Add an idea" autocomplete="off" enterkeyhint="send">
-      <button class="btn" id="addbtn" type="submit">Add</button>
-    </form>
-    <p class="err" id="ierr" hidden></p>
-    <div id="ideas"><p class="empty">Loading ideas</p></div>
+    <h2>Map</h2>
+    <p class="sub">Hotels, factories, airports, and stations. Tap a pin for details.</p>
+    <div class="chips" id="mapfilters"></div>
+    <div id="map"></div>
+    <p class="err" id="maperr" hidden></p>
+    <div class="plist" id="plist"></div>
   </div>
 </main>
 
@@ -274,11 +273,12 @@
     <button data-v="trip" class="on"><span class="g">行</span>Trip</button>
     <button data-v="itin"><span class="g">程</span>Itinerary</button>
     <button data-v="weather"><span class="g">天</span>Weather</button>
-    <button data-v="ideas"><span class="g">想</span>Ideas</button>
+    <button data-v="map"><span class="g">图</span>Map</button>
     <button data-v="guide"><span class="g">指</span>Guide</button>
   </div>
 </nav>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 /* ============ EDIT THESE ============ */
 const TRIP = {
@@ -378,6 +378,20 @@ const AIRPORTS = [
   { zh: '香港國際機場', en: 'Hong Kong International Airport (HKG)', py: 'Xiānggǎng Guójì Jīchǎng' }
 ];
 
+// Map pins. type: hotel, factory, airport, transit, or tbd (area only, exact pin to come).
+// Add a pin by copying a line. lat and lon come from Apple Maps or Google Maps (long press, copy coordinates).
+const PLACES = [
+  { type: 'hotel', en: 'The Ritz-Carlton, Hong Kong', zh: '香港麗思卡爾頓酒店', addrZh: '九龍柯士甸道西1號 環球貿易廣場',
+    addr: 'International Commerce Centre, 1 Austin Road West, Kowloon', when: 'Dec 10 to 11 (Rick and Alisha to Dec 12)', py: 'Xiānggǎng Lìsī Kǎ\'ěrdùn Jiǔdiàn', lat: 22.3030, lon: 114.1600 },
+  { type: 'transit', en: 'Hong Kong West Kowloon high speed rail station', when: 'Dec 10, arrive from Shenzhen. Hong Kong immigration is here.', addr: 'Next to the Ritz-Carlton', lat: 22.3042, lon: 114.1653 },
+  { type: 'airport', en: 'Shanghai Pudong International Airport (PVG)', zh: '上海浦东国际机场', py: 'Shànghǎi Pǔdōng Guójì Jīchǎng', when: 'Dec 5, everyone lands', lat: 31.1443, lon: 121.8083 },
+  { type: 'airport', en: 'Ningbo Lishe International Airport (NGB)', zh: '宁波栎社国际机场', py: 'Níngbō Lìshè Guójì Jīchǎng', when: 'Dec 7, likely flight to Shenzhen', lat: 29.8267, lon: 121.4619 },
+  { type: 'airport', en: 'Shenzhen Bao\'an International Airport (SZX)', zh: '深圳宝安国际机场', py: 'Shēnzhèn Bǎo\'ān Guójì Jīchǎng', when: 'Dec 7, arrive from Ningbo', lat: 22.6393, lon: 113.8107 },
+  { type: 'airport', en: 'Hong Kong International Airport (HKG)', zh: '香港國際機場', py: 'Xiānggǎng Guójì Jīchǎng', when: 'Dec 11 and 12, flights home', lat: 22.3080, lon: 113.9185 },
+  { type: 'tbd', en: 'Cixi: Platinum Hanjue Hotel and Ningbo Zhongda Leader factory', when: 'Dec 6 night and Dec 7 tour', approx: true, lat: 30.1697, lon: 121.2663 },
+  { type: 'tbd', en: 'Dongguan: Foshan Zhongda Lide facility', when: 'Dec 8 tour', approx: true, lat: 23.0207, lon: 113.7518 }
+];
+
 const PHRASES = [
   ['Hello', 'Nǐ hǎo', '你好'],
   ['Thank you', 'Xièxie', '谢谢'],
@@ -413,7 +427,7 @@ function show(v) {
   document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
   window.scrollTo(0, 0);
   if (v === 'weather') loadWeather();
-  if (v === 'ideas') loadIdeas();
+  if (v === 'map') showMap();
 }
 document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
 
@@ -514,68 +528,80 @@ function paintWeather(c, j) {
   $('#wsub').textContent = c.name + ' right now';
 }
 
-/* ---------- Ideas (shared) ---------- */
-let me = null;
-try { me = localStorage.getItem('china-who'); } catch (e) {}
-if (!CREW.some((c) => c.id === me)) me = null;
-let ideas = [], ideasTimer = null;
-const coupleName = (id) => (CREW.find((c) => c.id === id) || { names: id }).names;
-
-function renderWho() {
-  $('#who').innerHTML = CREW.map((c) => '<button class="chip' + (c.id === me ? ' on' : '') + '" data-id="' + c.id + '">' + c.names + '</button>').join('');
-  document.querySelectorAll('#who .chip').forEach((b) => b.addEventListener('click', () => {
-    me = b.dataset.id;
-    try { localStorage.setItem('china-who', me); } catch (e) {}
-    renderWho(); renderIdeas();
-  }));
-}
-function showErr(msg) { const e = $('#ierr'); e.textContent = msg || ''; e.hidden = !msg; }
-function renderIdeas() {
-  if (!ideas.length) { $('#ideas').innerHTML = '<p class="empty">No ideas yet. Add the first one above.</p>'; return; }
-  const sorted = ideas.slice().sort((a, b) => b.votes.length - a.votes.length || b.created - a.created);
-  $('#ideas').innerHTML = sorted.map((i) => {
-    const mine = me && i.votes.includes(me);
-    return '<div class="idea"><div><div class="tx">' + esc(i.text) + '</div><div class="by">' + coupleName(i.by) + (me === i.by ? ' · <button class="rm" data-rm="' + i.id + '">remove</button>' : '') + '</div></div><button class="vote' + (mine ? ' mine' : '') + '" data-v="' + i.id + '" aria-label="Vote">+' + i.votes.length + '</button></div>';
-  }).join('');
-  document.querySelectorAll('[data-v]').forEach((b) => { if (b.classList.contains('vote')) b.addEventListener('click', () => vote(b.dataset.v)); });
-  document.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => removeIdea(b.dataset.rm)));
-}
+/* ---------- Map ---------- */
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-async function api(path, opts) {
-  const r = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts));
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || 'Something went wrong.');
-  return j;
+const TYPES = {
+  hotel:   { label: 'Hotels',    color: '#E0402F' },
+  factory: { label: 'Factories', color: '#5FB89A' },
+  airport: { label: 'Airports',  color: '#6FA8DC' },
+  transit: { label: 'Trains',    color: '#E8B04A' },
+  tbd:     { label: 'Area only', color: '#8FA3B8' }
+};
+let map = null, mapReady = false, mapFilter = 'all';
+const markers = [];
+
+function mapsLink(p) {
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  return ios ? 'https://maps.apple.com/?ll=' + p.lat + ',' + p.lon + '&q=' + encodeURIComponent(p.en)
+             : 'geo:' + p.lat + ',' + p.lon + '?q=' + p.lat + ',' + p.lon + '(' + encodeURIComponent(p.en) + ')';
 }
-async function loadIdeas() {
-  try { ideas = await api('/api/ideas'); showErr(''); renderIdeas(); }
-  catch (e) { showErr('Could not reach the server. Try again in a moment.'); }
-  clearTimeout(ideasTimer);
-  ideasTimer = setTimeout(() => { if (!document.hidden && $('#v-ideas').classList.contains('on')) loadIdeas(); }, 30000);
+function popupFor(p, i) {
+  const d = document.createElement('div');
+  d.className = 'pop';
+  d.innerHTML = '<b>' + esc(p.en) + '</b>' + (p.zh ? '<div class="zh">' + esc(p.zh) + '</div>' : '') +
+    (p.addr ? '<div class="ad">' + esc(p.addr) + '</div>' : '') +
+    (p.when ? '<div class="ad">' + esc(p.when) + '</div>' : '') +
+    (p.approx ? '<div class="ap">Pin is approximate. Exact spot to come.</div>' : '') +
+    '<div class="acts">' + (p.zh ? '<button type="button" data-show="' + i + '">Show driver</button>' : '') +
+    '<a href="' + mapsLink(p) + '">Open in Maps</a></div>';
+  const b = d.querySelector('[data-show]');
+  if (b) b.addEventListener('click', () => openShow(p.zh + (p.addrZh ? '<br><span style="font-size:.55em;font-weight:600">' + esc(p.addrZh) + '</span>' : ''), p.en, p.py));
+  return d;
 }
-async function vote(id) {
-  if (!me) return showErr('Pick who you are first.');
-  try {
-    const u = await api('/api/ideas/' + id + '/vote', { method: 'POST', body: JSON.stringify({ by: me }) });
-    ideas = ideas.map((i) => (i.id === id ? u : i)); showErr(''); renderIdeas();
-  } catch (e) { showErr(e.message); }
+function renderMapFilters() {
+  const keys = ['all'].concat(Object.keys(TYPES).filter((k) => PLACES.some((p) => p.type === k)));
+  $('#mapfilters').innerHTML = keys.map((k) => '<button class="chip' + (k === mapFilter ? ' on' : '') + '" data-k="' + k + '">' +
+    (k === 'all' ? 'All' : '<span class="legend" style="background:' + TYPES[k].color + '"></span>' + TYPES[k].label) + '</button>').join('');
+  document.querySelectorAll('#mapfilters .chip').forEach((b) => b.addEventListener('click', () => { mapFilter = b.dataset.k; renderMapFilters(); applyMapFilter(true); }));
 }
-async function removeIdea(id) {
-  if (!confirm('Remove this idea?')) return;
-  try { await api('/api/ideas/' + id, { method: 'DELETE', body: JSON.stringify({ by: me }) }); ideas = ideas.filter((i) => i.id !== id); renderIdeas(); }
-  catch (e) { showErr(e.message); }
+function applyMapFilter(fit) {
+  const vis = [];
+  markers.forEach((m) => {
+    const on = mapFilter === 'all' || m.p.type === mapFilter;
+    if (on) { m.marker.addTo(map); vis.push([m.p.lat, m.p.lon]); } else { map.removeLayer(m.marker); }
+  });
+  $('#plist').innerHTML = PLACES.map((p, i) => ({ p, i })).filter((x) => mapFilter === 'all' || x.p.type === mapFilter).map((x) =>
+    '<button class="prow" data-i="' + x.i + '"><b>' + esc(x.p.en) + '</b><span>' + esc(x.p.when || TYPES[x.p.type].label) + '</span></button>').join('');
+  document.querySelectorAll('.prow').forEach((b) => b.addEventListener('click', () => {
+    const m = markers[+b.dataset.i];
+    document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (mapFilter !== 'all' && m.p.type !== mapFilter) return;
+    map.flyTo([m.p.lat, m.p.lon], 12, { duration: 0.8 });
+    setTimeout(() => m.marker.openPopup(), 850);
+  }));
+  if (fit && vis.length) map.fitBounds(vis, { padding: [40, 40], maxZoom: 11 });
 }
-$('#addform').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const inp = $('#newidea'), text = inp.value.trim();
-  if (!text) return;
-  if (!me) return showErr('Pick who you are first.');
-  $('#addbtn').disabled = true;
-  try { const n = await api('/api/ideas', { method: 'POST', body: JSON.stringify({ text, by: me }) }); ideas.unshift(n); inp.value = ''; showErr(''); renderIdeas(); }
-  catch (err) { showErr(err.message); }
-  $('#addbtn').disabled = false;
-});
-document.addEventListener('visibilitychange', () => { if (!document.hidden && $('#v-ideas').classList.contains('on')) loadIdeas(); });
+function showMap() {
+  if (typeof L === 'undefined') {
+    const e = $('#maperr'); e.hidden = false;
+    e.textContent = 'The map could not load. Check your connection and switch tabs to try again.';
+    return;
+  }
+  $('#maperr').hidden = true;
+  if (!mapReady) {
+    mapReady = true;
+    map = L.map('map', { zoomControl: true, attributionControl: true }).setView([30.5, 118], 5);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+    PLACES.forEach((p, i) => {
+      const icon = L.divIcon({ className: '', html: '<div class="pin' + (p.type === 'tbd' ? ' tbd' : '') + '" style="background:' + TYPES[p.type].color + '"></div>', iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -10] });
+      const marker = L.marker([p.lat, p.lon], { icon, title: p.en }).bindPopup(() => popupFor(p, i));
+      markers.push({ p, marker });
+    });
+    renderMapFilters();
+    applyMapFilter(true);
+  }
+  setTimeout(() => map.invalidateSize(), 50);
+}
 
 /* ---------- Guide ---------- */
 function openShow(zh, en, py) {
@@ -605,7 +631,7 @@ function renderGuide() {
 }
 
 /* ---------- Boot ---------- */
-renderItin(); renderCrew(); renderDiff(); renderClocks(); renderCities(); renderWho(); renderGuide();
+renderItin(); renderCrew(); renderDiff(); renderClocks(); renderCities(); renderGuide();
 tickCountdown();
 setInterval(tickCountdown, 1000);
 setInterval(renderClocks, 15000);
