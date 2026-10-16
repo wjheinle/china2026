@@ -126,14 +126,10 @@
 
   /* Guide */
   .gsub { margin-top: 26px; }
-  .drv { margin-top: 12px; display: grid; gap: 10px; }
-  .dcard { background: var(--ink-2); border-radius: 14px; padding: 14px 16px; cursor: pointer; border: 1px solid var(--line); text-align: left; width: 100%; }
-  .dcard .zh { font-family: var(--han); font-weight: 600; font-size: 24px; }
-  .dcard .en { font-size: 14px; color: var(--haze); margin-top: 2px; }
-  .dcard .tap { font-size: 12px; color: var(--jade); margin-top: 6px; }
   .phr { margin-top: 12px; border-top: 1px solid var(--line); }
   .ph { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
-  .ph .py { font-size: 13px; color: var(--haze); }
+  .ph .say { font-family: var(--display); font-weight: 600; font-size: 19px; margin-top: 2px; }
+  .ph .py { font-size: 13px; color: var(--haze); margin-top: 1px; }
   .ph .zh { font-family: var(--han); font-weight: 600; font-size: 20px; text-align: right; }
   .chk { margin-top: 12px; }
   .chk label { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
@@ -244,12 +240,6 @@
     <h2>Guide</h2>
 
     <div class="gsub">
-      <h2 style="font-size:21px">Show your driver</h2>
-      <p class="sub">Tap a card to fill the screen with Chinese text.</p>
-      <div class="drv" id="drv"></div>
-    </div>
-
-    <div class="gsub">
       <h2 style="font-size:21px">Before we go</h2>
       <div class="chk" id="chk"></div>
     </div>
@@ -354,34 +344,6 @@ const CITIES = [
   // { name: 'Beijing', lat: 39.9042, lon: 116.4074, tz: 'Asia/Shanghai' },
 ];
 
-// Hotels show up as tap-to-show cards in the Guide tab. Fill in when known.
-const HOTELS = [
-  { en: 'The Ritz-Carlton, Hong Kong', zh: '香港麗思卡爾頓酒店',
-    addrZh: '九龍柯士甸道西1號 環球貿易廣場',
-    addrEn: 'International Commerce Centre, 1 Austin Road West, Kowloon',
-    py: 'Xiānggǎng Lìsī Kǎ\'ěrdùn Jiǔdiàn' },
-  { en: 'Platinum Hanjue Hotel, Cixi', zh: '慈溪白金汉爵大酒店',
-    addrZh: '浙江省慈溪市杨梅大道北路888号',
-    addrEn: 'No. 888 Yangmei Avenue North Road, Cixi, Zhejiang',
-    py: 'Cíxī Báijīn Hànjué Dàjiǔdiàn' },
-  { en: 'Ningbo Zhongda Leader Intelligent Transmission', zh: '宁波中大力德智能传动股份有限公司',
-    addrZh: '浙江省慈溪市新兴一路185号',
-    addrEn: 'No. 185 First Xinxing Road, Cixi City, Zhejiang',
-    py: 'Níngbō Zhōngdà Lìdé Zhìnéng Chuándòng Gǔfèn Yǒuxiàn Gōngsī' },
-  { en: 'Dongguan facility, Yonglida Tiansheng Technology Park', zh: '宁波中大力德智能传动股份有限公司东莞分公司',
-    addrZh: '东莞市万江街道新和社区港口大道永利达(添盛)科技园2栋A座3楼至5楼',
-    addrEn: '3rd to 5th Floor, Block A, Building 2, Gangkou Avenue, Wanjiang, Dongguan',
-    py: 'Níngbō Zhōngdà Lìdé Zhìnéng Chuándòng Gǔfèn Yǒuxiàn Gōngsī Dōngguǎn Fēngōngsī' }
-];
-
-const AIRPORTS = [
-  { zh: '上海浦东国际机场', en: 'Shanghai Pudong International Airport (PVG)', py: 'Shànghǎi Pǔdōng Guójì Jīchǎng' },
-  { zh: '上海虹桥国际机场', en: 'Shanghai Hongqiao International Airport (SHA)', py: 'Shànghǎi Hóngqiáo Guójì Jīchǎng' },
-  { zh: '宁波栎社国际机场', en: 'Ningbo Lishe International Airport (NGB)', py: 'Níngbō Lìshè Guójì Jīchǎng' },
-  { zh: '深圳宝安国际机场', en: 'Shenzhen Bao\'an International Airport (SZX)', py: 'Shēnzhèn Bǎo\'ān Guójì Jīchǎng' },
-  { zh: '香港國際機場', en: 'Hong Kong International Airport (HKG)', py: 'Xiānggǎng Guójì Jīchǎng' }
-];
-
 // Map pins. type: hotel, factory, airport, transit, or tbd (area only, exact pin to come).
 // Add a pin by copying a line. lat and lon come from Apple Maps or Google Maps (long press, copy coordinates).
 const PLACES = [
@@ -404,24 +366,25 @@ const PLACES = [
 ];
 
 const PHRASES = [
-  ['Hello', 'Nǐ hǎo', '你好'],
-  ['Thank you', 'Xièxie', '谢谢'],
-  ['Excuse me / May I ask', 'Qǐngwèn', '请问'],
-  ['Cheers', 'Gānbēi', '干杯'],
-  ['Delicious', 'Hǎochī', '好吃'],
-  ['No spicy, please', 'Bú yào là', '不要辣'],
-  ['Where is the restroom?', 'Xǐshǒujiān zài nǎlǐ?', '洗手间在哪里？'],
-  ['How much is it?', 'Duōshao qián?', '多少钱？'],
-  ['The check, please', 'Mǎidān', '买单'],
-  ['Water', 'Shuǐ', '水'],
-  ['Sorry', 'Duìbuqǐ', '对不起'],
-  ['I don\'t understand', 'Wǒ tīng bù dǒng', '我听不懂']
+  // English, pinyin, Chinese, how to say it
+  ['Hello', 'Nǐ hǎo', '你好', 'Knee How'],
+  ['Thank you', 'Xièxie', '谢谢', 'Shyeh Shyeh'],
+  ['Excuse me / May I ask', 'Qǐngwèn', '请问', 'Ching Wun'],
+  ['Cheers', 'Gānbēi', '干杯', 'Gahn Bay'],
+  ['Delicious', 'Hǎochī', '好吃', 'How Chrr'],
+  ['No spicy, please', 'Bú yào là', '不要辣', 'Boo Yow Lah'],
+  ['Where is the restroom?', 'Xǐshǒujiān zài nǎlǐ?', '洗手间在哪里？', 'Shee Show Jyen Zye Nah Lee'],
+  ['How much is it?', 'Duōshao qián?', '多少钱？', 'Dwoh Shaow Chyen'],
+  ['The check, please', 'Mǎidān', '买单', 'My Dahn'],
+  ['Water', 'Shuǐ', '水', 'Shway'],
+  ['Sorry', 'Duìbuqǐ', '对不起', 'Dway Boo Chee'],
+  ['I don\'t understand', 'Wǒ tīng bù dǒng', '我听不懂', 'Woh Ting Boo Dong']
 ];
 
 const CHECKLIST = [
   ['Confirm entry requirements with the host', 'Passport validity and any visa or entry paperwork. Ask the host company what they need from you.'],
   ['Set up a VPN before you leave', 'Many Western apps and sites are blocked in mainland China. Install and test it at home.'],
-  ['Get an eSIM or roaming plan', 'Set it up ahead of time so you have data when you land.'],
+  ['Get International Data Plan or an eSIM', 'Set it up before you leave so you have data when you land.'],
   ['Set up Alipay or WeChat Pay', 'Link a foreign card before the trip. Many places prefer mobile pay over cash.'],
   ['Download offline maps and a translator', 'Save the languages and areas you need for offline use.'],
   ['Screenshot flights, hotels, and host contacts', 'Keep copies that work with no signal.']
@@ -621,16 +584,7 @@ function openShow(zh, en, py) {
 }
 $('#show').addEventListener('click', () => $('#show').classList.remove('on'));
 function renderGuide() {
-  const cards = [];
-  HOTELS.forEach((h) => cards.push({ zh: h.zh, sub: h.addrZh, en: h.en + (h.addrEn ? ' · ' + h.addrEn : ''), py: h.py }));
-  AIRPORTS.forEach((a) => cards.push({ zh: a.zh, en: a.en, py: a.py }));
-  $('#drv').innerHTML = (HOTELS.length ? '' : '<p class="sub">Hotel cards will appear here once the host confirms them.</p>') +
-    cards.map((c, i) => '<button class="dcard" data-c="' + i + '"><div class="zh">' + c.zh + '</div><div class="en">' + c.en + '</div><div class="tap">Tap to show</div></button>').join('');
-  document.querySelectorAll('.dcard').forEach((b) => b.addEventListener('click', () => {
-    const c = cards[+b.dataset.c];
-    openShow(c.zh + (c.sub ? '<br><span style="font-size:.55em;font-weight:600">' + c.sub + '</span>' : ''), c.en, c.py);
-  }));
-  $('#phr').innerHTML = PHRASES.map((p) => '<div class="ph"><div><div>' + p[0] + '</div><div class="py">' + p[1] + '</div></div><div class="zh">' + p[2] + '</div></div>').join('');
+  $('#phr').innerHTML = PHRASES.map((p) => '<div class="ph"><div><div>' + p[0] + '</div><div class="say">' + p[3] + '</div><div class="py">' + p[1] + '</div></div><div class="zh">' + p[2] + '</div></div>').join('');
 
   let done = {};
   try { done = JSON.parse(localStorage.getItem('china-chk') || '{}'); } catch (e) {}
