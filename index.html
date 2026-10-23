@@ -77,8 +77,22 @@
   .stop .date { font-size: 13px; color: var(--haze); }
   .stop h3 { font-family: var(--display); font-weight: 600; font-size: 19px; margin-top: 1px; }
   .stop p { color: #cfd6e0; font-size: 15px; margin-top: 3px; }
-  .stop.tbd h3 { color: var(--haze); font-weight: 400; font-style: italic; }
   .tline { margin-top: 18px; }
+  .itbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .itbar .chip { flex: none; margin-top: 4px; }
+  .btn { background: var(--lantern); border: 0; border-radius: 12px; padding: 12px 18px; font-weight: 700; cursor: pointer; color: #fff; }
+  .btn.ghost { background: var(--ink-3); color: var(--paper); }
+  .btn.full { width: 100%; margin-top: 14px; }
+  .btn:disabled { opacity: .5; }
+  .itform { margin-top: 14px; background: var(--ink-2); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+  .itform h3 { font-family: var(--display); font-weight: 600; font-size: 19px; }
+  .itform label { display: grid; gap: 4px; font-size: 13px; color: var(--haze); }
+  .itform input, .itform textarea { width: 100%; background: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; color: var(--paper); font: inherit; font-size: 16px; }
+  .itform textarea { resize: vertical; }
+  .itbtns { display: flex; gap: 10px; }
+  .stop .ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .stop .ctl button { background: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+  .stop .ctl button.rm { color: #ff9b8f; }
 
   .crew { margin-top: 14px; display: grid; gap: 10px; }
   .couple { background: var(--ink-2); border-radius: 14px; padding: 14px 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
@@ -206,9 +220,28 @@
 <!-- ITINERARY -->
 <main id="v-itin" class="view">
   <div class="wrap" style="padding-top: calc(env(safe-area-inset-top, 0px) + 28px)">
-    <h2>Itinerary</h2>
-    <p class="sub">Updated as the host sends details</p>
+    <div class="itbar">
+      <div>
+        <h2>Itinerary</h2>
+        <p class="sub" id="itsub">Updated as the host sends details</p>
+      </div>
+      <button class="chip" id="itedit" type="button">Edit</button>
+    </div>
+    <div id="itaddwrap" hidden><button class="btn full" id="itadd" type="button">Add a stop</button></div>
+    <form class="itform" id="itform" hidden>
+      <h3 id="itformtitle">Add a stop</h3>
+      <label>Date<input id="itdate" type="date" required></label>
+      <label>Time<input id="ittime" type="text" maxlength="40" placeholder="Day, Evening, or 3:00 PM" autocomplete="off"></label>
+      <label>Title<input id="ittitle" type="text" maxlength="120" placeholder="What is happening" autocomplete="off" required></label>
+      <label>Notes<textarea id="itnote" rows="3" maxlength="500" placeholder="Address, hotel, flight number, anything useful"></textarea></label>
+      <div class="itbtns">
+        <button class="btn" id="itsave" type="submit">Save</button>
+        <button class="btn ghost" id="itcancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="err" id="iterr" hidden></p>
     <div class="tline" id="itin"></div>
+    <p class="note">New details are added here as the hosts confirm them.</p>
   </div>
 </main>
 
@@ -330,8 +363,7 @@ const ITINERARY = [
   { date: '2026-12-12', time: '12:00 PM', title: 'Rick & Alisha check out of the Ritz-Carlton',
     note: 'Their flight leaves at 10:30 PM, so ask the hotel about holding bags.' },
   { date: '2026-12-12', time: '10:30 PM', title: 'Rick & Alisha fly home from Hong Kong',
-    note: 'HKG to San Francisco, landing 6:55 PM the same day.' },
-  { tbd: true, title: 'More details coming from the host', note: 'Hotels, train times, flights, and dinners will be added here.' }
+    note: 'HKG to San Francisco, landing 6:55 PM the same day.' }
 ];
 
 const CITIES = [
@@ -402,6 +434,7 @@ function show(v) {
   window.scrollTo(0, 0);
   if (v === 'weather') loadWeather();
   if (v === 'map') showMap();
+  if (v === 'itin') loadItin();
 }
 document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
 
@@ -446,15 +479,172 @@ function renderDiff() {
   $('#diff').textContent = 'On Dec 5, Shanghai is ahead of ' + parts.join(', ') + '.';
 }
 
-/* ---------- Itinerary and crew ---------- */
-function renderItin() {
-  $('#itin').innerHTML = ITINERARY.map((s, i) => {
-    if (s.tbd) return '<div class="stop tbd"><h3>' + s.title + '</h3><p>' + (s.note || '') + '</p></div>';
-    const d = new Date(s.date + 'T12:00:00+08:00');
-    const label = new Intl.DateTimeFormat('en-US', { timeZone: SH, weekday: 'long', month: 'long', day: 'numeric' }).format(d) + (s.time ? ', ' + s.time : '');
-    return '<div class="stop' + (i === 0 ? ' first' : '') + '"><div class="date">' + label + '</div><h3>' + s.title + '</h3>' + (s.note ? '<p>' + s.note + '</p>' : '') + '</div>';
-  }).join('');
+/* ---------- Itinerary (shared and editable) ---------- */
+const DEFAULT_ITEMS = ITINERARY;
+let itin = { items: null, locked: false };   // items stays null until the first edit is saved on the server
+let itEdit = false, itRef = null;            // itRef is the stop being edited, or null when adding
+try {
+  const c = JSON.parse(localStorage.getItem('china-itin') || 'null');
+  if (c && Array.isArray(c.items)) itin = { items: c.items, locked: !!c.locked };
+} catch (e) {}
+let pin = '';
+try { pin = localStorage.getItem('china-pin') || ''; } catch (e) {}
+
+const itItems = () => (Array.isArray(itin.items) ? itin.items : DEFAULT_ITEMS);
+function itErr(msg) { const e = $('#iterr'); e.textContent = msg || ''; e.hidden = !msg; }
+function cacheIt() { try { localStorage.setItem('china-itin', JSON.stringify(itin)); } catch (e) {} }
+function savePin(p) { pin = p; try { p ? localStorage.setItem('china-pin', p) : localStorage.removeItem('china-pin'); } catch (e) {} }
+
+async function itApi(path, method, body, retried) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (pin) headers['x-edit-pin'] = pin;
+  let r;
+  try { r = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { throw new Error('Could not reach the server. Try again in a moment.'); }
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) {
+    if (retried) { savePin(''); throw new Error('That PIN did not work.'); }
+    const p = prompt('Enter the edit PIN');
+    if (!p) throw new Error('Editing needs the PIN.');
+    savePin(p.trim());
+    return itApi(path, method, body, true);
+  }
+  if (!r.ok) { const err = new Error(j.error || 'Something went wrong. Try again.'); err.status = r.status; throw err; }
+  return j;
 }
+function applyItems(j) {
+  if (j && Array.isArray(j.items)) {
+    itin.items = j.items;
+    if (j.locked !== undefined) itin.locked = !!j.locked;
+    cacheIt();
+    renderItin();
+  }
+}
+// The first edit copies the built-in schedule to the server so the group shares one copy.
+async function ensureSeeded() {
+  if (!Array.isArray(itin.items)) applyItems(await itApi('/api/itinerary/seed', 'POST', { items: DEFAULT_ITEMS }));
+}
+async function loadItin() {
+  renderItin();
+  try {
+    const r = await fetch('/api/itinerary', { cache: 'no-store' });
+    if (!r.ok) throw new Error('bad status');
+    const j = await r.json();
+    itin.locked = !!j.locked;
+    if (Array.isArray(j.items)) { itin.items = j.items; cacheIt(); }
+    else { itin.items = null; try { localStorage.removeItem('china-itin'); } catch (e) {} }
+    renderItin();
+  } catch (e) { /* offline: keep showing the last copy */ }
+}
+
+function renderItin() {
+  const items = itItems();
+  $('#itin').innerHTML = items.map((s, i) => {
+    const d = new Date(s.date + 'T12:00:00+08:00');
+    const label = new Intl.DateTimeFormat('en-US', { timeZone: SH, weekday: 'long', month: 'long', day: 'numeric' }).format(d) + (s.time ? ', ' + esc(s.time) : '');
+    const up = i > 0 && items[i - 1].date === s.date, down = i < items.length - 1 && items[i + 1].date === s.date;
+    const ref = ' data-i="' + i + '" data-id="' + esc(s.id || '') + '"';
+    const ctl = itEdit ? '<div class="ctl">' +
+      (up ? '<button type="button" data-act="up"' + ref + '>Earlier</button>' : '') +
+      (down ? '<button type="button" data-act="down"' + ref + '>Later</button>' : '') +
+      '<button type="button" data-act="edit"' + ref + '>Edit</button>' +
+      '<button type="button" class="rm" data-act="del"' + ref + '>Remove</button></div>' : '';
+    return '<div class="stop' + (i === 0 ? ' first' : '') + '"><div class="date">' + label + '</div><h3>' + esc(s.title) + '</h3>' + (s.note ? '<p>' + esc(s.note) + '</p>' : '') + ctl + '</div>';
+  }).join('') || '<p class="empty">Nothing on the schedule yet.</p>';
+}
+
+function setEditMode(on) {
+  itEdit = on;
+  $('#itedit').textContent = on ? 'Done' : 'Edit';
+  $('#itaddwrap').hidden = !on;
+  $('#itsub').textContent = on ? 'Changes show up on everyone\'s phone.' : 'Updated as the host sends details';
+  if (!on) closeForm();
+  itErr('');
+  renderItin();
+}
+function closeForm() { itRef = null; $('#itform').hidden = true; }
+function openForm(stop, ref) {
+  itRef = ref || null;
+  const items = itItems();
+  $('#itformtitle').textContent = stop ? 'Edit stop' : 'Add a stop';
+  $('#itdate').value = stop ? stop.date : (items.length ? items[items.length - 1].date : '2026-12-05');
+  $('#ittime').value = stop ? stop.time || '' : '';
+  $('#ittitle').value = stop ? stop.title : '';
+  $('#itnote').value = stop ? stop.note || '' : '';
+  $('#itform').hidden = false;
+  $('#itform').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (!stop) $('#ittitle').focus();
+}
+
+$('#itedit').addEventListener('click', async () => {
+  if (itEdit) return setEditMode(false);
+  itErr('');
+  if (itin.locked && !pin) {
+    try { await itApi('/api/itinerary/verify', 'POST'); } catch (e) { return itErr(e.message); }
+  }
+  setEditMode(true);
+});
+$('#itadd').addEventListener('click', () => openForm(null, null));
+$('#itcancel').addEventListener('click', () => { closeForm(); itErr(''); });
+
+// Look up a stop's server id. Built-in stops get one after the first edit copies them to the server.
+async function resolveId(i, id) {
+  if (id) return id;
+  await ensureSeeded();
+  return itin.items[i] && itin.items[i].id;
+}
+async function run(task) {
+  itErr('');
+  try { await task(); }
+  catch (e) {
+    itErr(e.message);
+    if (e.status === 404) loadItin();
+  }
+}
+
+$('#itin').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button[data-act]');
+  if (!b) return;
+  const i = +b.dataset.i, act = b.dataset.act, items = itItems(), stop = items[i];
+  if (!stop) return;
+  if (act === 'edit') return openForm(stop, { i, id: b.dataset.id });
+  if (act === 'del') {
+    if (!confirm('Remove "' + stop.title + '" from the schedule?')) return;
+    return run(async () => {
+      const id = await resolveId(i, b.dataset.id);
+      applyItems(await itApi('/api/itinerary/' + encodeURIComponent(id), 'DELETE'));
+    });
+  }
+  run(async () => {
+    const id = await resolveId(i, b.dataset.id);
+    applyItems(await itApi('/api/itinerary/' + encodeURIComponent(id) + '/move', 'POST', { dir: act === 'up' ? -1 : 1 }));
+  });
+});
+
+$('#itform').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const body = { date: $('#itdate').value, time: $('#ittime').value.trim(), title: $('#ittitle').value.trim(), note: $('#itnote').value.trim() };
+  if (!body.date) return itErr('Pick a date.');
+  if (!body.title) return itErr('Add a title.');
+  const ref = itRef;
+  $('#itsave').disabled = true;
+  run(async () => {
+    if (ref) {
+      const id = await resolveId(ref.i, ref.id);
+      applyItems(await itApi('/api/itinerary/' + encodeURIComponent(id), 'PUT', body));
+    } else {
+      await ensureSeeded();
+      applyItems(await itApi('/api/itinerary', 'POST', body));
+    }
+    closeForm();
+  }).then(() => { $('#itsave').disabled = false; });
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && $('#v-itin').classList.contains('on') && !itEdit) loadItin();
+});
+
+/* ---------- Crew ---------- */
 function renderCrew() {
   $('#crew').innerHTML = CREW.map((c) => '<div class="couple"><b>' + c.names + '</b><span>' + c.from + '</span>' +
     (c.flights ? '<div class="fl">' + c.flights.map((f) => '<div>' + f + '</div>').join('') + '</div>' : '') + '</div>').join('');
@@ -596,7 +786,7 @@ function renderGuide() {
 }
 
 /* ---------- Boot ---------- */
-renderItin(); renderCrew(); renderDiff(); renderClocks(); renderCities(); renderGuide();
+loadItin(); renderCrew(); renderDiff(); renderClocks(); renderCities(); renderGuide();
 tickCountdown();
 setInterval(tickCountdown, 1000);
 setInterval(renderClocks, 15000);
