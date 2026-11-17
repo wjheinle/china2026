@@ -130,6 +130,8 @@
   .pop .ap { color: #b3341f; margin-top: 4px; font-size: 13px; }
   .pop .acts { display: flex; gap: 8px; margin-top: 10px; }
   .pop .acts a, .pop .acts button { font: inherit; font-size: 13px; font-weight: 700; padding: 8px 10px; border-radius: 10px; border: 0; background: var(--ink); color: var(--paper); text-decoration: none; cursor: pointer; }
+  #mapsrc { margin-top: 12px; }
+  #mapmode { margin-top: 8px; }
   .legend { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
   .plist { margin-top: 14px; border-top: 1px solid var(--line); }
   .prow { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 12px 0; cursor: pointer; }
@@ -262,6 +264,8 @@
     <p class="sub">Hotels, factories, airports, and stations. Tap a pin for details.</p>
     <div class="chips" id="mapfilters"></div>
     <div id="map"></div>
+    <p class="sub" id="mapsrc"></p>
+    <div class="chips" id="mapmode"></div>
     <p class="err" id="maperr" hidden></p>
     <div class="plist" id="plist"></div>
   </div>
@@ -351,14 +355,16 @@ const ITINERARY = [
     note: 'Overnight at the Platinum Hanjue Hotel in Cixi (to be confirmed).' },
   { date: '2026-12-07', time: 'Day', title: 'Tour Ningbo Zhongda Leader Intelligent Transmission',
     note: 'Main facility: No. 185 First Xinxing Road, New Industrial Zone, Cixi City, Zhejiang.' },
-  { date: '2026-12-07', time: 'Evening', title: 'Fly to Shenzhen',
-    note: 'Flight details to come. Hotel to be confirmed.' },
-  { date: '2026-12-08', time: 'Day', title: 'Tour Foshan Zhongda Lide Drive Technology',
-    note: 'Dongguan facility: 3rd to 5th Floor, Block A, Building 2, Yonglida Tiansheng Technology Park, Gangkou Avenue, Wanjiang District. Hotel to be confirmed.' },
-  { date: '2026-12-09', time: 'Day', title: 'Hosts show us around Shenzhen',
-    note: 'Hotel to be confirmed.' },
-  { date: '2026-12-10', time: 'Morning', title: 'Dropped at the Shenzhen high speed rail station',
-    note: 'Train to Hong Kong West Kowloon station, right next to the Ritz-Carlton. Train times to come.' },
+  { date: '2026-12-07', time: 'Night', title: 'Stay near Ningbo',
+    note: 'Hotel to be confirmed. The flight to Guangzhou leaves Tuesday morning.' },
+  { date: '2026-12-08', time: 'Morning', title: 'Fly from Ningbo to Guangzhou',
+    note: 'Land at Guangzhou Baiyun International Airport (CAN). Flight details to come.' },
+  { date: '2026-12-08', time: 'Day', title: 'Visit the automated factory in Foshan',
+    note: 'No. 8 Chuangsheng Road, Beijiao Town, Shunde District, Foshan, Guangdong. Hotel to be confirmed.' },
+  { date: '2026-12-09', time: 'Day', title: 'Tour Guangzhou with ZD',
+    note: 'Larry suggested Guangzhou as a great place to visit. Hotel to be confirmed.' },
+  { date: '2026-12-10', time: 'Morning', title: 'Dropped at the high speed rail station',
+    note: 'Train to Hong Kong West Kowloon station, right next to the Ritz-Carlton. Station and train times to come.' },
   { date: '2026-12-10', time: '3:00 PM check-in', title: 'The Ritz-Carlton, Hong Kong',
     note: 'International Commerce Centre, 1 Austin Road West, Kowloon. Phone +852 2263 2263.' },
   { date: '2026-12-11', time: '12:00 PM', title: 'Bill & Melissa check out of the Ritz-Carlton',
@@ -374,8 +380,8 @@ const ITINERARY = [
 const CITIES = [
   { name: 'Shanghai', lat: 31.2304, lon: 121.4737, tz: 'Asia/Shanghai' },
   { name: 'Ningbo', lat: 29.8683, lon: 121.5440, tz: 'Asia/Shanghai' },
-  { name: 'Shenzhen', lat: 22.5431, lon: 114.0579, tz: 'Asia/Shanghai' },
-  { name: 'Dongguan', lat: 23.0207, lon: 113.7518, tz: 'Asia/Shanghai' },
+  { name: 'Foshan', lat: 23.0215, lon: 113.1214, tz: 'Asia/Shanghai' },
+  { name: 'Guangzhou', lat: 23.1291, lon: 113.2644, tz: 'Asia/Shanghai' },
   { name: 'Hong Kong', lat: 22.3193, lon: 114.1694, tz: 'Asia/Hong_Kong' }
   // Add more once the itinerary is set, for example:
   // { name: 'Beijing', lat: 39.9042, lon: 116.4074, tz: 'Asia/Shanghai' },
@@ -386,20 +392,19 @@ const CITIES = [
 const PLACES = [
   { type: 'hotel', en: 'The Ritz-Carlton, Hong Kong', zh: '香港麗思卡爾頓酒店', addrZh: '九龍柯士甸道西1號 環球貿易廣場',
     addr: 'International Commerce Centre, 1 Austin Road West, Kowloon', when: 'Dec 10 to 11 (Rick and Alisha to Dec 12)', py: 'Xiānggǎng Lìsī Kǎ\'ěrdùn Jiǔdiàn', lat: 22.3030, lon: 114.1600 },
-  { type: 'transit', en: 'Hong Kong West Kowloon high speed rail station', when: 'Dec 10, arrive from Shenzhen. Hong Kong immigration is here.', addr: 'Next to the Ritz-Carlton', lat: 22.3042, lon: 114.1653 },
+  { type: 'transit', en: 'Hong Kong West Kowloon high speed rail station', when: 'Dec 10, arrive by train. Hong Kong immigration is here.', addr: 'Next to the Ritz-Carlton', lat: 22.3042, lon: 114.1653 },
   { type: 'airport', en: 'Shanghai Pudong International Airport (PVG)', zh: '上海浦东国际机场', py: 'Shànghǎi Pǔdōng Guójì Jīchǎng', when: 'Dec 5, everyone lands', lat: 31.1443, lon: 121.8083 },
-  { type: 'airport', en: 'Ningbo Lishe International Airport (NGB)', zh: '宁波栎社国际机场', py: 'Níngbō Lìshè Guójì Jīchǎng', when: 'Dec 7, likely flight to Shenzhen', lat: 29.8267, lon: 121.4619 },
-  { type: 'airport', en: 'Shenzhen Bao\'an International Airport (SZX)', zh: '深圳宝安国际机场', py: 'Shēnzhèn Bǎo\'ān Guójì Jīchǎng', when: 'Dec 7, arrive from Ningbo', lat: 22.6393, lon: 113.8107 },
+  { type: 'airport', en: 'Ningbo Lishe International Airport (NGB)', zh: '宁波栎社国际机场', py: 'Níngbō Lìshè Guójì Jīchǎng', when: 'Dec 8 morning, flight to Guangzhou', lat: 29.8267, lon: 121.4619 },
+  { type: 'airport', en: 'Guangzhou Baiyun International Airport (CAN)', zh: '广州白云国际机场', py: 'Guǎngzhōu Báiyún Guójì Jīchǎng', when: 'Dec 8 morning, arrive from Ningbo', lat: 23.3924, lon: 113.2988 },
   { type: 'airport', en: 'Hong Kong International Airport (HKG)', zh: '香港國際機場', py: 'Xiānggǎng Guójì Jīchǎng', when: 'Dec 11 and 12, flights home', lat: 22.3080, lon: 113.9185 },
   { type: 'hotel', en: 'Platinum Hanjue Hotel, Cixi', zh: '慈溪白金汉爵大酒店', addrZh: '浙江省慈溪市杨梅大道北路888号',
     addr: 'No. 888 Yangmei Avenue North Road, Cixi, Zhejiang', when: 'Dec 6 night (to be confirmed)', py: 'Cíxī Báijīn Hànjué Dàjiǔdiàn', lat: 30.154519, lon: 121.237105 },
   { type: 'factory', en: 'Ningbo Zhongda Leader Intelligent Transmission', zh: '宁波中大力德智能传动股份有限公司', addrZh: '浙江省慈溪市新兴一路185号',
     addr: 'No. 185 First Xinxing Road, New Industrial Zone, Cixi City, Zhejiang', when: 'Dec 7 tour. Phone +86 574 6353 7171',
     py: 'Níngbō Zhōngdà Lìdé Zhìnéng Chuándòng Gǔfèn Yǒuxiàn Gōngsī', lat: 30.234494, lon: 121.208804 },
-  { type: 'tbd', en: 'Dongguan facility, Yonglida Tiansheng Technology Park', zh: '宁波中大力德智能传动股份有限公司东莞分公司',
-    addrZh: '东莞市万江街道新和社区港口大道永利达(添盛)科技园2栋A座3楼至5楼',
-    addr: '3rd to 5th Floor, Block A, Building 2, Yonglida Tiansheng Technology Park, Gangkou Avenue, Xinhe Community, Wanjiang District, Dongguan',
-    when: 'Dec 8 tour', py: 'Níngbō Zhōngdà Lìdé Zhìnéng Chuándòng Gǔfèn Yǒuxiàn Gōngsī Dōngguǎn Fēngōngsī', approx: true, lat: 23.0500, lon: 113.7500 }
+  { type: 'tbd', en: 'Automated factory, Foshan', zh: '广东省佛山市顺德区北滘镇创盛路8号',
+    addr: 'No. 8 Chuangsheng Road, Beijiao Town, Shunde District, Foshan, Guangdong (Tanzhou Convention and Exhibition South Area, Sanlong Bay)',
+    when: 'Dec 8 visit', py: 'Guǎngdōng Shěng Fóshān Shì Shùndé Qū Běijiāo Zhèn Chuàngshèng Lù Bā Hào', approx: true, lat: 22.9514, lon: 113.1592 }
 ];
 
 const PHRASES = [
@@ -709,6 +714,79 @@ const TYPES = {
 let map = null, mapReady = false, mapFilter = 'all';
 const markers = [];
 
+// Two map sources. Global has English labels and works well from the US. China is for the trip itself,
+// since many Western map servers are slow or blocked inside China. Auto switches by date.
+const MAP_CHINA_FROM = new Date('2026-12-05T00:00:00+08:00');   // the day we land
+const MAP_CHINA_UNTIL = new Date('2026-12-10T14:00:00+08:00');  // back to Global once we reach Hong Kong
+const MAP_SOURCES = {
+  global: { label: 'Global', shift: false,
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    opts: { subdomains: 'abcd', maxZoom: 18, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' } },
+  china: { label: 'China', shift: true,
+    url: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=en&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+    opts: { subdomains: '1234', maxZoom: 18, attribution: '&copy; AutoNavi' } }
+};
+let mapMode = 'auto', curSource = null, tileLayer = null, tileOk = 0, tileBad = 0, fellBack = false;
+try { const m = localStorage.getItem('china-mapmode'); if (m === 'auto' || m === 'global' || m === 'china') mapMode = m; } catch (e) {}
+function autoSource() { const now = new Date(); return now >= MAP_CHINA_FROM && now < MAP_CHINA_UNTIL ? 'china' : 'global'; }
+function activeSource() { return mapMode === 'auto' ? autoSource() : mapMode; }
+
+// Maps inside mainland China are drawn on a shifted coordinate system (GCJ-02). Pins are stored as normal
+// GPS coordinates, so they get shifted when the China map is showing. Hong Kong and places abroad are not shifted.
+function gcjLat(x, y) { let r = -100 + 2 * x + 3 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3; r += (20 * Math.sin(y * Math.PI) + 40 * Math.sin(y / 3 * Math.PI)) * 2 / 3; r += (160 * Math.sin(y / 12 * Math.PI) + 320 * Math.sin(y * Math.PI / 30)) * 2 / 3; return r; }
+function gcjLon(x, y) { let r = 300 + x + 2 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3; r += (20 * Math.sin(x * Math.PI) + 40 * Math.sin(x / 3 * Math.PI)) * 2 / 3; r += (150 * Math.sin(x / 12 * Math.PI) + 300 * Math.sin(x / 30 * Math.PI)) * 2 / 3; return r; }
+function wgs2gcj(lat, lon) {
+  const a = 6378245.0, ee = 0.00669342162296594323;
+  let dLat = gcjLat(lon - 105, lat - 35), dLon = gcjLon(lon - 105, lat - 35);
+  const rad = lat / 180 * Math.PI; let m = Math.sin(rad); m = 1 - ee * m * m; const s = Math.sqrt(m);
+  dLat = (dLat * 180) / ((a * (1 - ee)) / (m * s) * Math.PI);
+  dLon = (dLon * 180) / (a / s * Math.cos(rad) * Math.PI);
+  return [lat + dLat, lon + dLon];
+}
+function shiftedPlace(p) {
+  const outside = p.lon < 72.004 || p.lon > 137.8347 || p.lat < 0.8293 || p.lat > 55.8271;
+  const hongKong = p.lat > 22.13 && p.lat < 22.57 && p.lon > 113.83 && p.lon < 114.45;
+  return !(outside || hongKong);
+}
+function toMapCoords(p) {
+  return curSource && MAP_SOURCES[curSource].shift && shiftedPlace(p) ? wgs2gcj(p.lat, p.lon) : [p.lat, p.lon];
+}
+
+function renderMapMode() {
+  $('#mapmode').innerHTML = [['auto', 'Auto'], ['global', 'Global'], ['china', 'China']].map((m) =>
+    '<button class="chip' + (m[0] === mapMode ? ' on' : '') + '" data-m="' + m[0] + '">' + m[1] + '</button>').join('');
+  document.querySelectorAll('#mapmode .chip').forEach((b) => b.addEventListener('click', () => {
+    mapMode = b.dataset.m; fellBack = false;
+    try { localStorage.setItem('china-mapmode', mapMode); } catch (e) {}
+    setSource(activeSource(), true); renderMapMode();
+  }));
+}
+function mapNote(extra) {
+  const s = MAP_SOURCES[curSource];
+  $('#mapsrc').textContent = 'Showing the ' + s.label + ' map. ' + (mapMode === 'auto'
+    ? 'Auto uses Global now, China from Dec 5, and Global again in Hong Kong.' : 'Set to ' + (mapMode === 'china' ? 'China' : 'Global') + '.') + (extra ? ' ' + extra : '');
+}
+function setSource(name, fit) {
+  if (curSource === name && tileLayer) { mapNote(); return; }
+  curSource = name;
+  if (tileLayer) map.removeLayer(tileLayer);
+  tileOk = 0; tileBad = 0;
+  const s = MAP_SOURCES[name];
+  tileLayer = L.tileLayer(s.url, s.opts);
+  tileLayer.on('tileload', () => { tileOk++; });
+  tileLayer.on('tileerror', () => {
+    tileBad++;
+    if (tileOk === 0 && tileBad === 6) {
+      if (mapMode === 'auto' && !fellBack) { fellBack = true; setSource(name === 'china' ? 'global' : 'china', true); mapNote('The first map would not load, so this one was switched in.'); }
+      else mapNote('This map is not loading. Try the other option below.');
+    }
+  });
+  tileLayer.addTo(map);
+  markers.forEach((m) => m.marker.setLatLng(toMapCoords(m.p)));
+  mapNote();
+  if (fit && markers.length) applyMapFilter(true);
+}
+
 function mapsLink(p) {
   const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
   return ios ? 'https://maps.apple.com/?ll=' + p.lat + ',' + p.lon + '&q=' + encodeURIComponent(p.en)
@@ -737,7 +815,7 @@ function applyMapFilter(fit) {
   const vis = [];
   markers.forEach((m) => {
     const on = mapFilter === 'all' || m.p.type === mapFilter;
-    if (on) { m.marker.addTo(map); vis.push([m.p.lat, m.p.lon]); } else { map.removeLayer(m.marker); }
+    if (on) { m.marker.addTo(map); vis.push(toMapCoords(m.p)); } else { map.removeLayer(m.marker); }
   });
   $('#plist').innerHTML = PLACES.map((p, i) => ({ p, i })).filter((x) => mapFilter === 'all' || x.p.type === mapFilter).map((x) =>
     '<button class="prow" data-i="' + x.i + '"><b>' + esc(x.p.en) + '</b><span>' + esc(x.p.when || TYPES[x.p.type].label) + '</span></button>').join('');
@@ -745,7 +823,7 @@ function applyMapFilter(fit) {
     const m = markers[+b.dataset.i];
     document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
     if (mapFilter !== 'all' && m.p.type !== mapFilter) return;
-    map.flyTo([m.p.lat, m.p.lon], 12, { duration: 0.8 });
+    map.flyTo(m.marker.getLatLng(), 12, { duration: 0.8 });
     setTimeout(() => m.marker.openPopup(), 850);
   }));
   if (fit && vis.length) map.fitBounds(vis, { padding: [40, 40], maxZoom: 11 });
@@ -759,15 +837,18 @@ function showMap() {
   $('#maperr').hidden = true;
   if (!mapReady) {
     mapReady = true;
-    map = L.map('map', { zoomControl: true, attributionControl: true }).setView([30.5, 118], 5);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+    map = L.map('map', { zoomControl: true, attributionControl: true, maxZoom: 18 }).setView([30.5, 118], 5);
     PLACES.forEach((p, i) => {
       const icon = L.divIcon({ className: '', html: '<div class="pin' + (p.type === 'tbd' ? ' tbd' : '') + '" style="background:' + TYPES[p.type].color + '"></div>', iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -10] });
       const marker = L.marker([p.lat, p.lon], { icon, title: p.en }).bindPopup(() => popupFor(p, i));
       markers.push({ p, marker });
     });
     renderMapFilters();
+    renderMapMode();
+    setSource(activeSource(), false);
     applyMapFilter(true);
+  } else if (mapMode === 'auto' && activeSource() !== curSource && !fellBack) {
+    setSource(activeSource(), true);   // the date rolled over while the app was open
   }
   setTimeout(() => map.invalidateSize(), 50);
 }
