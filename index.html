@@ -131,7 +131,6 @@
   .pop .acts { display: flex; gap: 8px; margin-top: 10px; }
   .pop .acts a, .pop .acts button { font: inherit; font-size: 13px; font-weight: 700; padding: 8px 10px; border-radius: 10px; border: 0; background: var(--ink); color: var(--paper); text-decoration: none; cursor: pointer; }
   #mapsrc { margin-top: 12px; }
-  #mapmode { margin-top: 8px; }
   .legend { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
   .plist { margin-top: 14px; border-top: 1px solid var(--line); }
   .prow { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 12px 0; cursor: pointer; }
@@ -265,7 +264,6 @@
     <div class="chips" id="mapfilters"></div>
     <div id="map"></div>
     <p class="sub" id="mapsrc"></p>
-    <div class="chips" id="mapmode"></div>
     <p class="err" id="maperr" hidden></p>
     <div class="plist" id="plist"></div>
   </div>
@@ -714,25 +712,15 @@ const TYPES = {
 let map = null, mapReady = false, mapFilter = 'all';
 const markers = [];
 
-// Two map sources. Global has English labels and works well from the US. China is for the trip itself,
-// since many Western map servers are slow or blocked inside China. Auto switches by date.
-const MAP_CHINA_FROM = new Date('2026-12-05T00:00:00+08:00');   // the day we land
-const MAP_CHINA_UNTIL = new Date('2026-12-10T14:00:00+08:00');  // back to Global once we reach Hong Kong
-const MAP_SOURCES = {
-  global: { label: 'Global', shift: false,
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    opts: { subdomains: 'abcd', maxZoom: 18, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' } },
-  china: { label: 'China', shift: true,
-    url: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=en&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
-    opts: { subdomains: '1234', maxZoom: 18, attribution: '&copy; AutoNavi' } }
+// One map for the whole trip: English labels, and it works inside China. Its coordinates are shifted (GCJ-02).
+const MAP_TILES = {
+  url: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=en&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+  opts: { subdomains: '1234', maxZoom: 18, attribution: '&copy; AutoNavi' }
 };
-let mapMode = 'auto', curSource = null, tileLayer = null, tileOk = 0, tileBad = 0, fellBack = false;
-try { const m = localStorage.getItem('china-mapmode'); if (m === 'auto' || m === 'global' || m === 'china') mapMode = m; } catch (e) {}
-function autoSource() { const now = new Date(); return now >= MAP_CHINA_FROM && now < MAP_CHINA_UNTIL ? 'china' : 'global'; }
-function activeSource() { return mapMode === 'auto' ? autoSource() : mapMode; }
+let tileLayer = null, tileOk = 0, tileBad = 0;
 
 // Maps inside mainland China are drawn on a shifted coordinate system (GCJ-02). Pins are stored as normal
-// GPS coordinates, so they get shifted when the China map is showing. Hong Kong and places abroad are not shifted.
+// GPS coordinates, so they get shifted for this map. Hong Kong and places abroad are not shifted.
 function gcjLat(x, y) { let r = -100 + 2 * x + 3 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3; r += (20 * Math.sin(y * Math.PI) + 40 * Math.sin(y / 3 * Math.PI)) * 2 / 3; r += (160 * Math.sin(y / 12 * Math.PI) + 320 * Math.sin(y * Math.PI / 30)) * 2 / 3; return r; }
 function gcjLon(x, y) { let r = 300 + x + 2 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3; r += (20 * Math.sin(x * Math.PI) + 40 * Math.sin(x / 3 * Math.PI)) * 2 / 3; r += (150 * Math.sin(x / 12 * Math.PI) + 300 * Math.sin(x / 30 * Math.PI)) * 2 / 3; return r; }
 function wgs2gcj(lat, lon) {
@@ -749,42 +737,18 @@ function shiftedPlace(p) {
   return !(outside || hongKong);
 }
 function toMapCoords(p) {
-  return curSource && MAP_SOURCES[curSource].shift && shiftedPlace(p) ? wgs2gcj(p.lat, p.lon) : [p.lat, p.lon];
+  return shiftedPlace(p) ? wgs2gcj(p.lat, p.lon) : [p.lat, p.lon];
 }
 
-function renderMapMode() {
-  $('#mapmode').innerHTML = [['auto', 'Auto'], ['global', 'Global'], ['china', 'China']].map((m) =>
-    '<button class="chip' + (m[0] === mapMode ? ' on' : '') + '" data-m="' + m[0] + '">' + m[1] + '</button>').join('');
-  document.querySelectorAll('#mapmode .chip').forEach((b) => b.addEventListener('click', () => {
-    mapMode = b.dataset.m; fellBack = false;
-    try { localStorage.setItem('china-mapmode', mapMode); } catch (e) {}
-    setSource(activeSource(), true); renderMapMode();
-  }));
-}
-function mapNote(extra) {
-  const s = MAP_SOURCES[curSource];
-  $('#mapsrc').textContent = 'Showing the ' + s.label + ' map. ' + (mapMode === 'auto'
-    ? 'Auto uses Global now, China from Dec 5, and Global again in Hong Kong.' : 'Set to ' + (mapMode === 'china' ? 'China' : 'Global') + '.') + (extra ? ' ' + extra : '');
-}
-function setSource(name, fit) {
-  if (curSource === name && tileLayer) { mapNote(); return; }
-  curSource = name;
-  if (tileLayer) map.removeLayer(tileLayer);
-  tileOk = 0; tileBad = 0;
-  const s = MAP_SOURCES[name];
-  tileLayer = L.tileLayer(s.url, s.opts);
-  tileLayer.on('tileload', () => { tileOk++; });
+function setupTiles() {
+  tileLayer = L.tileLayer(MAP_TILES.url, MAP_TILES.opts);
+  tileLayer.on('tileload', () => { tileOk++; $('#mapsrc').textContent = ''; });
   tileLayer.on('tileerror', () => {
     tileBad++;
-    if (tileOk === 0 && tileBad === 6) {
-      if (mapMode === 'auto' && !fellBack) { fellBack = true; setSource(name === 'china' ? 'global' : 'china', true); mapNote('The first map would not load, so this one was switched in.'); }
-      else mapNote('This map is not loading. Try the other option below.');
-    }
+    if (tileOk === 0 && tileBad === 6) $('#mapsrc').textContent = 'The map is not loading. Check your connection and reopen this tab.';
   });
   tileLayer.addTo(map);
   markers.forEach((m) => m.marker.setLatLng(toMapCoords(m.p)));
-  mapNote();
-  if (fit && markers.length) applyMapFilter(true);
 }
 
 function mapsLink(p) {
@@ -844,11 +808,8 @@ function showMap() {
       markers.push({ p, marker });
     });
     renderMapFilters();
-    renderMapMode();
-    setSource(activeSource(), false);
+    setupTiles();
     applyMapFilter(true);
-  } else if (mapMode === 'auto' && activeSource() !== curSource && !fellBack) {
-    setSource(activeSource(), true);   // the date rolled over while the app was open
   }
   setTimeout(() => map.invalidateSize(), 50);
 }
